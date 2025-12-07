@@ -32,6 +32,7 @@ use problem_examples::e11_code_surface_complexity::e1107_deep_nesting::e1107_ent
 use problem_examples::e11_code_surface_complexity::e1108_nested_match::e1108_entry;
 use problem_examples::e11_code_surface_complexity::e1109_excessive_chaining::e1109_entry;
 use problem_examples::e11_code_surface_complexity::e1110_nested_callbacks::e1110_entry;
+use problem_examples::e11_code_surface_complexity::e1111_excessive_tuple_complexity::e1111_entry;
 use problem_examples::e11_code_surface_complexity::e1112_magic_numbers::e1112_entry;
 use problem_examples::e12_code_pattern_complexity::e1201_complex_generics::e1201_entry;
 use problem_examples::e12_code_pattern_complexity::e1202_complex_lifetimes::e1202_entry;
@@ -220,6 +221,7 @@ fn show_category(category: &str) {
             println!("E1108 - Deeply nested match expressions");
             println!("E1109 - Excessive method chaining");
             println!("E1110 - Nested callbacks/closures");
+            println!("E1111 - Excessive tuple complexity");
             println!("E1112 - Hardcoded magic numbers");
         }
         "e12" => {
@@ -443,6 +445,7 @@ macro_rules! define_problems {
             ("E1108", "Nested match", e1108_entry),
             ("E1109", "Excessive chaining", e1109_entry),
             ("E1110", "Nested callbacks", e1110_entry),
+            ("E1111", "Excessive tuple complexity", e1111_entry),
             ("E1112", "Hardcoded magic numbers", e1112_entry),
 
             // E12: Code Pattern Complexity

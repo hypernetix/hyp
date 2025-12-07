@@ -10,6 +10,7 @@ pub mod e1107_deeply_nested_conditionals;
 pub mod e1108_deeply_nested_match;
 pub mod e1109_excessive_chaining;
 pub mod e1110_deeply_nested_closures;
+pub mod e1111_excessive_tuple_complexity;
 pub mod e1112_magic_numbers;
 pub mod registry;
 
@@ -23,4 +24,5 @@ pub use e1107_deeply_nested_conditionals::{E1107Config, E1107DeeplyNestedConditi
 pub use e1108_deeply_nested_match::{E1108Config, E1108DeeplyNestedMatch};
 pub use e1109_excessive_chaining::{E1109Config, E1109ExcessiveChaining};
 pub use e1110_deeply_nested_closures::{E1110Config, E1110DeeplyNestedClosures};
+pub use e1111_excessive_tuple_complexity::{E1111Config, E1111ExcessiveTupleComplexity};
 pub use e1112_magic_numbers::{E1112Config, E1112MagicNumbers};

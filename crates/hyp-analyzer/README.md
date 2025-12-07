@@ -67,6 +67,7 @@ These are straightforward pattern matches or simple metrics. Implement first.
  [x] | E1810 | String instead of &str | LOW | 2 | 2 | E18 API Design |
  [x] | E1104 | Overly large struct (too many fields) | MED | 2 | 1 | E11 Surface Complexity |
  [x] | E1017 | todo!/unimplemented! macros in code | HIGH | 2 | 1 | E10 Unsafe Code |
+ [x] | E1111 | Excessive tuple complexity | LOW | 2 | 2 | E11 Surface Complexity |
  [x] | E1112 | Hardcoded magic numbers | LOW | 2 | 2 | E11 Surface Complexity |
  [x] | E1410 | Float equality comparison with == | MED | 2 | 2 | E14 Type Safety |
  [x] | E1511 | Unbounded task/thread spawning in loop | HIGH | 2 | 2 | E15 Concurrency |
