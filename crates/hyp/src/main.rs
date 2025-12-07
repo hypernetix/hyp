@@ -71,8 +71,8 @@ enum Commands {
 
     /// Validate problem examples against the analyzer
     VerifyExamples {
-        /// Path to problem-examples source directory
-        #[arg(default_value = "crates/problem-examples/src")]
+        /// Path to hyp-examples source directory
+        #[arg(default_value = "crates/hyp-examples/src")]
         path: Option<PathBuf>,
     },
 }
@@ -92,7 +92,11 @@ fn main() -> Result<()> {
                 all: cli.all,
                 include: cli.include.as_ref().map(|s| split_csv(s)),
                 exclude: cli.exclude.as_ref().map(|s| split_csv(s)),
-                format: if cli.format == "json" { CliOutputFormat::Json } else { CliOutputFormat::Text },
+                format: if cli.format == "json" {
+                    CliOutputFormat::Json
+                } else {
+                    CliOutputFormat::Text
+                },
                 verbose: cli.verbose,
             };
             run_cli(opts, get_all_checkers)?;
@@ -138,7 +142,9 @@ fn main() -> Result<()> {
         }
 
         Some(Commands::VerifyExamples { path }) => {
-            let source = path.clone().unwrap_or_else(|| PathBuf::from("crates/problem-examples/src"));
+            let source = path
+                .clone()
+                .unwrap_or_else(|| PathBuf::from("crates/hyp-examples/src"));
             println!("Validating hyp against problem examples...\n");
             println!("Source directory: {}\n", source.display());
 

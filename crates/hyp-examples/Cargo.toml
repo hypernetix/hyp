@@ -1,5 +1,5 @@
 [package]
-name = "problem-examples"
+name = "hyp-examples"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

@@ -33,26 +33,24 @@ pub fn load_config(config_path: &Path) -> Result<AnalyzerConfig> {
     }
 
     let content = std::fs::read_to_string(config_path)?;
-    let extension = config_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+    let extension = config_path
+        .extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("");
 
     match extension.to_lowercase().as_str() {
-        "toml" => {
-            AnalyzerConfig::from_toml(&content).map_err(|e| {
-                crate::AnalyzerError::Config(format!("TOML parse error: {}", e))
-            })
-        }
-        "yaml" | "yml" => {
-            AnalyzerConfig::from_yaml(&content).map_err(|e| {
-                crate::AnalyzerError::Config(format!("YAML parse error: {}", e))
-            })
-        }
+        "toml" => AnalyzerConfig::from_toml(&content)
+            .map_err(|e| crate::AnalyzerError::Config(format!("TOML parse error: {}", e))),
+        "yaml" | "yml" => AnalyzerConfig::from_yaml(&content)
+            .map_err(|e| crate::AnalyzerError::Config(format!("YAML parse error: {}", e))),
         _ => {
             // Try TOML first (for Hyp.toml without extension matching), then YAML
             AnalyzerConfig::from_toml(&content)
                 .map_err(|e| crate::AnalyzerError::Config(format!("TOML parse error: {}", e)))
                 .or_else(|_| {
-                    AnalyzerConfig::from_yaml(&content)
-                        .map_err(|e| crate::AnalyzerError::Config(format!("YAML parse error: {}", e)))
+                    AnalyzerConfig::from_yaml(&content).map_err(|e| {
+                        crate::AnalyzerError::Config(format!("YAML parse error: {}", e))
+                    })
                 })
         }
     }
@@ -260,7 +258,10 @@ pub fn print_guidelines_from_registrations(
 
     // Get guidelines from the analyzer's enabled checkers
     for guideline in analyzer.enabled_guidelines() {
-        println!("- {} - {} - {}", guideline.code, guideline.name, guideline.suggestions);
+        println!(
+            "- {} - {} - {}",
+            guideline.code, guideline.name, guideline.suggestions
+        );
     }
 
     println!("\nTotal: {} guidelines", analyzer.checker_count());
@@ -285,7 +286,8 @@ where
     }
 
     // 3. Get registrations, apply include/exclude and config category filtering, build analyzer
-    let registrations = filter_registrations_with_config(make_registrations(), &opts, Some(&config));
+    let registrations =
+        filter_registrations_with_config(make_registrations(), &opts, Some(&config));
     let analyzer = build_analyzer_from_registrations(config, filters, registrations);
 
     // 4. Print enabled checkers (non-verbose mode)
@@ -556,19 +558,13 @@ where
         }
         if let Some(include_str) = include {
             let patterns: Vec<&str> = include_str.split(',').map(|s| s.trim()).collect();
-            if !patterns
-                .iter()
-                .any(|p| code.contains(&p.to_lowercase()))
-            {
+            if !patterns.iter().any(|p| code.contains(&p.to_lowercase())) {
                 continue;
             }
         }
         if let Some(exclude_str) = exclude {
             let patterns: Vec<&str> = exclude_str.split(',').map(|s| s.trim()).collect();
-            if patterns
-                .iter()
-                .any(|p| code.contains(&p.to_lowercase()))
-            {
+            if patterns.iter().any(|p| code.contains(&p.to_lowercase())) {
                 continue;
             }
         }
@@ -660,7 +656,7 @@ impl ValidationSummary {
 /// - All `eXXXX_good_*` functions do NOT trigger any EXXXX error
 ///
 /// # Arguments
-/// * `source` - Path to the problem-examples source directory
+/// * `source` - Path to the hyp-examples source directory
 /// * `registrations_fn` - Function that returns checker registrations to use
 ///
 /// # Returns
@@ -687,11 +683,7 @@ where
     // Create analyzer with all checkers enabled
     let config = AnalyzerConfig::default();
     let registrations = registrations_fn();
-    let analyzer = Analyzer::new_with_checkers(
-        config,
-        AnalyzerFilters::default(),
-        registrations,
-    );
+    let analyzer = Analyzer::new_with_checkers(config, AnalyzerFilters::default(), registrations);
 
     let mut all_validations: Vec<FunctionValidation> = Vec::new();
     let mut files_processed = 0;
@@ -802,7 +794,10 @@ where
 pub fn print_validation_results(summary: &ValidationSummary) {
     // Print violations
     if !summary.bad_not_detected.is_empty() {
-        println!("❌ BAD FUNCTIONS NOT DETECTED ({}):", summary.bad_not_detected.len());
+        println!(
+            "❌ BAD FUNCTIONS NOT DETECTED ({}):",
+            summary.bad_not_detected.len()
+        );
         println!("   These eXXXX_bad_* functions should trigger EXXXX but didn't:\n");
         for v in &summary.bad_not_detected {
             println!("   * {}", v.file);
@@ -835,18 +830,25 @@ pub fn print_validation_results(summary: &ValidationSummary) {
     // Summary
     println!("===================================================================================");
     println!("                                 VALIDATION SUMMARY");
-    println!("===================================================================================\n");
+    println!(
+        "===================================================================================\n"
+    );
 
     println!("Files processed: {}", summary.files_processed);
     println!("Total functions chcked: {}\n", summary.total_functions);
 
     println!(
         "Bad functions (eXXXX_bad_*):  {} out of {} not detected ({}%)",
-        summary.bad_total - summary.bad_passed, summary.bad_total, ((summary.bad_total - summary.bad_passed) as f64 / summary.bad_total as f64 * 100.0) as u8
+        summary.bad_total - summary.bad_passed,
+        summary.bad_total,
+        ((summary.bad_total - summary.bad_passed) as f64 / summary.bad_total as f64 * 100.0) as u8
     );
     println!(
         "Good functions (eXXXX_good_*): {} out of {} has problems ({}%)\n",
-        summary.good_total - summary.good_passed, summary.good_total, ((summary.good_total - summary.good_passed) as f64 / summary.good_total as f64 * 100.0) as u8
+        summary.good_total - summary.good_passed,
+        summary.good_total,
+        ((summary.good_total - summary.good_passed) as f64 / summary.good_total as f64 * 100.0)
+            as u8
     );
 
     if summary.all_passed() {
@@ -856,7 +858,9 @@ pub fn print_validation_results(summary: &ValidationSummary) {
         println!("\nTo fix these issues:");
         if !summary.bad_not_detected.is_empty() {
             println!("  • Implement or fix hyp checkers to detect the missing patterns");
-            println!("  • Or update the _bad_ functions if they don't actually demonstrate the problem");
+            println!(
+                "  • Or update the _bad_ functions if they don't actually demonstrate the problem"
+            );
         }
         if !summary.good_incorrectly_detected.is_empty() {
             println!("  • Fix hyp checkers that are too aggressive");

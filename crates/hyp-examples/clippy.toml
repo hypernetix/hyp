@@ -1,4 +1,4 @@
-# Clippy configuration for problem-examples crate
+# Clippy configuration for hyp-examples crate
 # These examples intentionally demonstrate problematic patterns,
 # so we allow the lints that would normally catch them.
 

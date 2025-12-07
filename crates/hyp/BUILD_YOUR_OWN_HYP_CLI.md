@@ -287,5 +287,5 @@ fn all_registrations() -> Vec<CheckerRegistration> {
 ## Resources
 
 - **Built-in checkers**: `hyp/crates/hyp-analyzer/src/checkers/`
-- **Reference CLI**: `hyp/crates/hyp-analyzer-cli/src/main.rs`
+- **Reference CLI**: `hyp/crates/hyp/src/main.rs`
 - **CLI helpers**: `hyp/crates/hyp-analyzer/src/cli_helper.rs`

@@ -8,7 +8,7 @@ are very welcome.
 Before large changes, please scan:
 - `README.md` for the overall vision and conceptual model
 - `crates/hyp-analyzer/README.md` for checker architecture and macros
-- `crates/hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md` for custom CLI patterns
+- `crates/hyp/BUILD_YOUR_OWN_HYP_CLI.md` for custom CLI patterns
 
 If you plan a substantial redesign, new category family, or major API change, please open
 an issue first so we can align on direction.
@@ -38,7 +38,7 @@ an issue first so we can align on direction.
    - Run the analyzer CLI against the bundled problem examples:
 
      ```bash
-     cargo run --bin hyp -- -s crates/problem-examples/src -v
+     cargo run --bin hyp -- -s crates/hyp-examples/src -v
      cargo run --bin hyp -- --list
      ```
 
@@ -46,7 +46,7 @@ an issue first so we can align on direction.
 
 ## Project Layout
 
-- `crates/problem-examples/`
+- `crates/hyp-examples/`
   Compilable but problematic Rust snippets, grouped by categories `E10`–`E18`.
 
 - `crates/hyp-analyzer/`
@@ -55,7 +55,7 @@ an issue first so we can align on direction.
   - Checker trait and registry
   - Analyzer configuration and violation reporting
 
-- `crates/hyp-analyzer-cli/`
+- `crates/hyp/`
   Reference **CLI** that wires the analyzer into a usable `hyp` binary.
   Also contains `BUILD_YOUR_OWN_HYP_CLI.md` showing how to build your own `cargo hyp-myproject`.
 
@@ -68,7 +68,7 @@ from tools like Clippy, Kani, Miri, Prusti, and MIRAI.
 
 ### 1. Problem Examples
 
-These live in `crates/problem-examples/src/` and are grouped by category, e.g.:
+These live in `crates/hyp-examples/src/` and are grouped by category, e.g.:
 - `e10_unsafe_code/`
 - `e11_code_surface_complexity/`
 - `e14_type_safety/`
@@ -82,8 +82,8 @@ These live in `crates/problem-examples/src/` and are grouped by category, e.g.:
 
 - **Checklist when adding an example:**
   1. Add a new `.rs` file in the appropriate `eXX_...` folder.
-  2. Make sure it compiles with `cargo test -p problem-examples` (or full `cargo test`).
-  3. Update any listing/registry in the problem-examples crate if needed.
+  2. Make sure it compiles with `cargo test -p hyp-examples` (or full `cargo test`).
+  3. Update any listing/registry in the hyp-examples crate if needed.
 
 ### 2. New or Improved Checkers
 
@@ -135,18 +135,18 @@ patterns in:
 
 ### 3. CLI and Tooling
 
-The reference CLI lives in `crates/hyp-analyzer-cli/`.
+The reference CLI lives in `crates/hyp/`.
 
 You can:
 - Improve UX (flags, output formats, listing checkers).
 - Add examples or documentation for building project-specific CLIs.
 
 For a full, opinionated guide on custom CLIs (like `cargo hyp-myproject`), see:
-- `crates/hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md`
+- `crates/hyp/BUILD_YOUR_OWN_HYP_CLI.md`
 
 If you add new CLI functionality, please:
 - Add or update integration tests if applicable.
-- Extend `crates/hyp-analyzer-cli/README.md` and/or the top-level `README.md`.
+- Extend `crates/hyp/README.md` and/or the top-level `README.md`.
 
 ### 4. Documentation and Examples
 
@@ -158,7 +158,7 @@ Good contributions include:
 - Improving cross‑links between:
   - `README.md`
   - `crates/hyp-analyzer/README.md`
-  - `crates/hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md`
+  - `crates/hyp/BUILD_YOUR_OWN_HYP_CLI.md`
 
 When updating docs, keep headings and style consistent:
 - Use `##` / `###` headings.
@@ -234,7 +234,7 @@ If you are unsure where to start:
 - Browse the roadmap in `crates/hyp-analyzer/README.md` and pick an unimplemented checker.
 - Look at existing checkers (`E1001`, `E1002`, `E1003`, `E1106`, `E1401`, `E1402`, `E1403`)
   to understand the standard patterns.
-- Explore `crates/problem-examples/` and think about additional problematic patterns that
+- Explore `crates/hyp-examples/` and think about additional problematic patterns that
   deserve detection.
 
 Thank you for helping make Hyp a better tool for Rust teams and for AI‑assisted development. 🙌

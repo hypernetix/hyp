@@ -1,5 +1,5 @@
 [package]
-name = "hyp-analyzer-cli"
+name = "hyp"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true

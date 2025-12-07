@@ -1,10 +1,10 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/problem-examples",
-    "crates/problem-examples-cli",
+    "crates/hyp-examples",
+    "crates/hyp-examples-cli",
     "crates/hyp-analyzer",
-    "crates/hyp-analyzer-cli",
+    "crates/hyp",
 ]
 
 [workspace.package]

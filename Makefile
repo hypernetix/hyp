@@ -21,19 +21,19 @@ clippy:
 	}
 	@echo "Checking hyp-analyzer (strict)..."
 	@cd crates/hyp-analyzer && cargo clippy --all-targets -- -D warnings
-	@echo "Checking hyp-analyzer-cli (strict)..."
-	@cd crates/hyp-analyzer-cli && cargo clippy --bins -- -D warnings
+	@echo "Checking hyp (strict)..."
+	@cd crates/hyp && cargo clippy --bins -- -D warnings
 	@echo ""
-	@echo "Checking problem-examples (reporting issues)..."
-	@echo "Checking problem-examples (reporting issues)..."
+	@echo "Checking hyp-examples (reporting issues)..."
+	@echo "Checking hyp-examples (reporting issues)..."
 	@# Enabling restriction group as requested. Note: this includes conflicting lints!
-	@cd crates/problem-examples && cargo clippy --lib -- -W clippy::restriction -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::blanket_clippy_restriction_lints || true
+	@cd crates/hyp-examples && cargo clippy --lib -- -W clippy::restriction -W clippy::pedantic -W clippy::nursery -W clippy::cargo -A clippy::blanket_clippy_restriction_lints || true
 	@echo ""
-	@echo "Checking problem-examples-cli (allowing warnings from problem-examples)..."
-	@cd crates/problem-examples-cli && cargo clippy --bins 2>&1 | grep -v "problem-examples" | grep -E "^(warning|error):" || echo "  ✓ No issues in CLI code"
+	@echo "Checking hyp-examples-cli (allowing warnings from hyp-examples)..."
+	@cd crates/hyp-examples-cli && cargo clippy --bins 2>&1 | grep -v "hyp-examples" | grep -E "^(warning|error):" || echo "  ✓ No issues in CLI code"
 	@echo ""
 	@echo "✓ Clippy checks passed for analyzer and CLI crates"
-	@echo "Note: problem-examples crate intentionally contains problematic code for demonstration"
+	@echo "Note: hyp-examples crate intentionally contains problematic code for demonstration"
 
 ## Run Kani formal verifier
 kani:
@@ -45,7 +45,7 @@ kani:
 ## Run all tests in the workspace
 test:
 	@echo "Ensuring problem exampels are executable w/o problems..."
-	cargo run --bin problem-examples -- run-all
+	cargo run --bin hyp-examples -- run-all
 	@echo "Running unit tests..."
 	cargo test --workspace
 

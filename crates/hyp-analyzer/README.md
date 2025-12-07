@@ -442,7 +442,7 @@ cargo test
 cargo test e1001
 
 # Run against problem examples
-cargo run --bin hyp-analyzer-cli -- --source ../problem-examples/src
+cargo run --bin hyp -- --source ../hyp-examples/src
 ```
 
 ## License

@@ -116,7 +116,7 @@ use problem_examples::e18_api_design::e1810_string_instead_of_str::e1810_entry;
 use problem_examples::e18_api_design::e1812_non_exhaustive_enum::e1812_entry;
 
 #[derive(Parser)]
-#[command(name = "problem-examples")]
+#[command(name = "hyp-examples")]
 #[command(about = "Explore Rust code problem examples", long_about = None)]
 struct Cli {
     #[command(subcommand)]
@@ -184,7 +184,7 @@ fn list_categories() {
     println!("E18* - API Design Problems");
     println!("  Glob imports, public fields, naming, documentation\n");
 
-    println!("Use 'problem-examples show <category>' for details on a category");
+    println!("Use 'hyp-examples show <category>' for details on a category");
 }
 
 fn show_category(category: &str) {

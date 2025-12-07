@@ -1,9 +1,9 @@
-# Kani configuration for problem-examples-cli
+# Kani configuration for hyp-examples-cli
 # This focuses verification on our code and avoids third-party dependencies
 
 [package]
 # Only verify harnesses in this package
-name = "problem-examples-cli"
+name = "hyp-examples-cli"
 
 [verification]
 # Reduce verification scope to avoid third-party code

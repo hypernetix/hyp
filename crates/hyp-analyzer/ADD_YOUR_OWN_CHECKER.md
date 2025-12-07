@@ -6,8 +6,8 @@ This guide walks you through adding a new checker end-to-end. We'll use E1002 (D
 
 Adding a checker requires changes in **three crates**:
 1. **`hyp-analyzer`** - The checker implementation
-2. **`problem-examples`** - Compilable examples demonstrating the problem
-3. **`problem-examples-cli`** - Compilable CLI tool ensuring the problem examples can be compiled and executed w/o visible problems
+2. **`hyp-examples`** - Compilable examples demonstrating the problem
+3. **`hyp-examples-cli`** - Compilable CLI tool ensuring the problem examples can be compiled and executed w/o visible problems
 
 ## Step-by-Step Guide
 
@@ -175,7 +175,7 @@ pub fn e10_registrations() -> Vec<CheckerRegistration> {
 
 ### Step 4: Create Problem Example
 
-Create `crates/problem-examples/src/e10_unsafe_code/e1002_direct_unwrap_expect.rs`:
+Create `crates/hyp-examples/src/e10_unsafe_code/e1002_direct_unwrap_expect.rs`:
 
 ```rust
 /// E1002: Direct use of unwrap() and expect()
@@ -239,13 +239,13 @@ mod tests {
 
 **5a. Add to mod.rs:**
 
-Edit `crates/problem-examples/src/e10_unsafe_code/mod.rs`:
+Edit `crates/hyp-examples/src/e10_unsafe_code/mod.rs`:
 
 ```rust
 pub mod e1002_direct_unwrap_expect;
 ```
 
-**5b. Update CLI (problem-examples-cli/src/main.rs):**
+**5b. Update CLI (hyp-examples-cli/src/main.rs):**
 
 Add the import:
 ```rust
@@ -305,7 +305,7 @@ Add your checker to the appropriate Phase table:
   ```
   Include unit tests for key `eXXXX_good_*` helpers to validate the recommended patterns.
 
-For detailed guidance on problem example structure, see `crates/problem-examples/ADD_YOUR_OWN_PROBLEM.md`.
+For detailed guidance on problem example structure, see `crates/hyp-examples/ADD_YOUR_OWN_PROBLEM.md`.
 
 ## Checklist
 
@@ -315,13 +315,13 @@ For detailed guidance on problem example structure, see `crates/problem-examples
 - [ ] Added unit tests for positive and negative cases
 - [ ] Registered in `mod.rs` with `pub mod` and `pub use`
 - [ ] Registered in `registry.rs` with `register_checker!`
-- [ ] Created problem example file in `problem-examples/src/eXX_category/`
+- [ ] Created problem example file in `hyp-examples/src/eXX_category/`
 - [ ] Problem example has standard header format
 - [ ] Problem functions start with `eXXXX_bad_` prefix
 - [ ] Created `eXXXX_entry()` function
 - [ ] Add `eXXXX_good_` functions to demonstrate proper alternatives
-- [ ] Added to `problem-examples/src/eXX_category/mod.rs`
-- [ ] Added import to `problem-examples-cli/src/main.rs`
+- [ ] Added to `hyp-examples/src/eXX_category/mod.rs`
+- [ ] Added import to `hyp-examples-cli/src/main.rs`
 - [ ] Added to `show_category()` in CLI
 - [ ] Added to `define_problems!` macro in CLI
 - [ ] Updated `hyp-analyzer/README.md` roadmap table

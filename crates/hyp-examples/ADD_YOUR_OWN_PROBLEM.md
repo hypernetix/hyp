@@ -78,12 +78,12 @@ Pick the next available number in the appropriate category.
 Create a new file in the appropriate category directory:
 
 ```bash
-touch crates/problem-examples/src/e{XX}_{category}/e{XXXX}_{description}.rs
+touch crates/hyp-examples/src/e{XX}_{category}/e{XXXX}_{description}.rs
 ```
 
 Example:
 ```bash
-touch crates/problem-examples/src/e10_unsafe_code/e1002_direct_unwrap_expect.rs
+touch crates/hyp-examples/src/e10_unsafe_code/e1002_direct_unwrap_expect.rs
 ```
 
 ### Step 3: Write the Prolog
@@ -292,13 +292,13 @@ mod tests {
 
 **8a. Add to category mod.rs:**
 
-Edit `crates/problem-examples/src/e{XX}_{category}/mod.rs`:
+Edit `crates/hyp-examples/src/e{XX}_{category}/mod.rs`:
 
 ```rust
 pub mod e1002_direct_unwrap_expect;
 ```
 
-**8b. Update CLI (problem-examples-cli/src/main.rs):**
+**8b. Update CLI (hyp-examples-cli/src/main.rs):**
 
 Add the import:
 ```rust
@@ -336,10 +336,10 @@ Before submitting your problem example:
 - [ ] All good functions have `/// GOOD:` comment
 - [ ] Unit tests cover good examples only
 - [ ] Added to category `mod.rs`
-- [ ] Added to `problem-examples-cli/src/main.rs`
-- [ ] Code compiles: `cargo build -p problem-examples`
-- [ ] Tests pass: `cargo test -p problem-examples`
-- [ ] hyp detects bad patterns: `cargo run -p hyp -- crates/problem-examples/src/eXX_*/eXXXX_*.rs`
+- [ ] Added to `hyp-examples-cli/src/main.rs`
+- [ ] Code compiles: `cargo build -p hyp-examples`
+- [ ] Tests pass: `cargo test -p hyp-examples`
+- [ ] hyp detects bad patterns: `cargo run -p hyp -- crates/hyp-examples/src/eXX_*/eXXXX_*.rs`
 
 ## Questions?
 

@@ -1,5 +1,5 @@
 [package]
-name = "problem-examples-cli"
+name = "hyp-examples-cli"
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -7,11 +7,11 @@ license.workspace = true
 repository.workspace = true
 
 [[bin]]
-name = "problem-examples"
+name = "hyp-examples"
 path = "src/main.rs"
 
 [dependencies]
-problem-examples = { path = "../problem-examples" }
+hyp-examples = { path = "../hyp-examples" }
 clap = { workspace = true }
 
 [lints.rust]

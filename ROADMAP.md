@@ -2,7 +2,7 @@
 
 ## Core Functionality
 
-- [x] Initial problem-examples version with a CLI tool
+- [x] Initial hyp-examples version with a CLI tool
 - [x] Initial hyp-analyzer version with a CLI tool
 - [x] TOML-based configuration (Hyp.toml)
 - [x] CLI refactoring with subcommands (check, list, print-config, guideline, verify-examples)

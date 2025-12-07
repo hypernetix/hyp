@@ -57,7 +57,7 @@ fn process_large_number(value: u64) -> u8 {
     value as u8  // 256 becomes 0, 257 becomes 1, etc.
 }
 
-// There are many more examples, see problem-examples/
+// There are many more examples, see hyp-examples/
 // ...
 ```
 
@@ -123,7 +123,7 @@ to the built‑in Rust families. For example:
 
 These custom categories use the **same mechanism** as built‑in ones and you can easily build your own Hyp checkers and CLI tool:
 - see [hyp-analyzer/ADD_YOUR_OWN_CHECKER.md](hyp-analyzer/ADD_YOUR_OWN_CHECKER.md) for new checkers definition
-- see [hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md](hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md) for own CLI
+- see [hyp/BUILD_YOUR_OWN_HYP_CLI.md](hyp/BUILD_YOUR_OWN_HYP_CLI.md) for own CLI
 
 You can also **disable any built‑in Hyp checkers** that don’t match your project’s style while building your CLI version. Alternatively, you can fully configure project rules in the Hyp.toml config file enabling or disabling various checkers, redefining priority and adjusting categories as you wich. See the [Hyp configuration file](#hyp-configuration-file) section
 
@@ -153,7 +153,7 @@ Hyp fills a unique niche in the Rust tooling ecosystem. Here's how it compares:
 ## Built-in checks
 
 ### Problem Examples
-The `problem-examples` crate contains **compilable but complicated or unsafe Rust code** designed to illustrate real-world Rust patterns that:
+The `hyp-examples` crate contains **compilable but complicated or unsafe Rust code** designed to illustrate real-world Rust patterns that:
 - Compile successfully but are difficult to review or maintain by human developers or LLMs
 - May cause runtime errors or undefined behavior
 - Violate best practices despite being technically valid
@@ -188,7 +188,7 @@ your own domain-specific rules—all in a separate repository or a local crate i
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
-See [crates/hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md](crates/hyp-analyzer-cli/BUILD_YOUR_OWN_HYP_CLI.md) for complete guide.
+See [crates/hyp/BUILD_YOUR_OWN_HYP_CLI.md](crates/hyp/BUILD_YOUR_OWN_HYP_CLI.md) for complete guide.
 
 ## Hyp Configuration File
 
@@ -246,7 +246,7 @@ This workspace contains 4 crates:
 
 ### Libraries
 
-1. **problem-examples** - Compilable examples of problematic Rust code patterns
+1. **hyp-examples** - Compilable examples of problematic Rust code patterns
    - 100+ examples across 9 categories (E10-E18)
    - Each example demonstrates a specific anti-pattern
    - Intentionally disables clippy warnings to compile
@@ -260,13 +260,13 @@ This workspace contains 4 crates:
 
 ### CLI Tools
 
-3. **problem-examples-cli** - Interactive explorer for problem examples
+3. **hyp-examples-cli** - Interactive explorer for problem examples
    ```bash
-   cargo run --bin problem-examples list
-   cargo run --bin problem-examples show e10
+   cargo run --bin hyp-examples list
+   cargo run --bin hyp-examples show e10
    ```
 
-4. **hyp-analyzer-cli** - Main analyzer CLI tool that can be used as is or as hyp-custom example
+4. **hyp** - Main analyzer CLI tool that can be used as is or as hyp-custom example
    ```bash
    hyp check src/
    hyp list
@@ -327,14 +327,14 @@ cargo build
 hyp list
 
 # Run the analyzer on source code
-hyp check crates/problem-examples/src
+hyp check crates/hyp-examples/src
 
 # Print effective configuration
 hyp print-config
 
 # Explore problem examples
-cargo run --bin problem-examples list
-cargo run --bin problem-examples show e10
+cargo run --bin hyp-examples list
+cargo run --bin hyp-examples show e10
 
 # Run tests
 cargo test
@@ -358,7 +358,7 @@ hyp [COMMAND] [OPTIONS]
 | `list` | List all available checkers with their code, name, severity, and categories. |
 | `print-config` | Print the effective TOML configuration showing all checker settings. |
 | `guideline` | Print condensed AI guidelines based on currently enabled checkers. |
-| `verify-examples [PATH]` | Validate that Hyp correctly detects problems in example code. `PATH` defaults to `crates/problem-examples/src`. |
+| `verify-examples [PATH]` | Validate that Hyp correctly detects problems in example code. `PATH` defaults to `crates/hyp-examples/src`. |
 | `help` | Print help information for Hyp or a specific subcommand. |
 
 ### Global Options
@@ -433,7 +433,7 @@ hyp check src/ -f json
 
 ## Verify-Examples Command
 
-The `verify-examples` command validates that Hyp correctly detects problems in the `problem-examples` crate. This ensures checkers work as intended.
+The `verify-examples` command validates that Hyp correctly detects problems in the `hyp-examples` crate. This ensures checkers work as intended.
 
 ### How It Works
 
@@ -490,7 +490,7 @@ Hyp is designed for:
 
 Contributions are welcome! Areas where you can help:
 
-1. **Add problem examples** - Found a confusing Rust pattern? Add it to `problem-examples/`
+1. **Add problem examples** - Found a confusing Rust pattern? Add it to `hyp-examples/`
 2. **Improve descriptions** - Make explanations clearer for learners
 3. **Build analyzer rules** - Implement detection for existing problem categories
 4. **Test and report** - Try Hyp on real codebases and report findings

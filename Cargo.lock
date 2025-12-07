@@ -278,6 +278,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2304e00983f87ffb38b55b444b5e3b60a884b5d30c0fca7d82fe33449bbe55ea"
 
 [[package]]
+name = "hyp"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "clap",
+ "hyp-analyzer",
+]
+
+[[package]]
 name = "hyp-analyzer"
 version = "0.1.0"
 dependencies = [
@@ -296,12 +305,27 @@ dependencies = [
 ]
 
 [[package]]
-name = "hyp-analyzer-cli"
+name = "hyp-examples"
 version = "0.1.0"
 dependencies = [
- "anyhow",
+ "futures",
+ "log",
+ "once_cell",
+ "parking_lot",
+ "rand",
+ "regex",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "hyp-examples-cli"
+version = "0.1.0"
+dependencies = [
  "clap",
- "hyp-analyzer",
+ "hyp-examples",
 ]
 
 [[package]]
@@ -430,30 +454,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "85eae3c4ed2f50dcfe72643da4befc30deadb458a9b590d720cde2f2b1e97da9"
 dependencies = [
  "zerocopy",
-]
-
-[[package]]
-name = "problem-examples"
-version = "0.1.0"
-dependencies = [
- "futures",
- "log",
- "once_cell",
- "parking_lot",
- "rand",
- "regex",
- "serde",
- "serde_json",
- "thiserror",
- "tokio",
-]
-
-[[package]]
-name = "problem-examples-cli"
-version = "0.1.0"
-dependencies = [
- "clap",
- "problem-examples",
 ]
 
 [[package]]
