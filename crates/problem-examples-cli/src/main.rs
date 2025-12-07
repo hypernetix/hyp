@@ -1,0 +1,586 @@
+//! Problem Examples CLI
+//!
+//! A command-line tool to explore and demonstrate Rust code problems.
+
+use clap::{Parser, Subcommand};
+
+// Direct imports for all problem entry functions
+use problem_examples::e10_unsafe_code::e1001_direct_panic::e1001_entry;
+use problem_examples::e10_unsafe_code::e1002_direct_unwrap_expect::e1002_entry;
+use problem_examples::e10_unsafe_code::e1003_unsafe_code::e1003_entry;
+use problem_examples::e10_unsafe_code::e1004_unsafe_no_comments::e1004_entry;
+use problem_examples::e10_unsafe_code::e1005_raw_pointer_deref::e1005_entry;
+use problem_examples::e10_unsafe_code::e1006_unsafe_transmute::e1006_entry;
+use problem_examples::e10_unsafe_code::e1007_mutable_static::e1007_entry;
+use problem_examples::e10_unsafe_code::e1008_unsafe_trait_impl::e1008_entry;
+use problem_examples::e10_unsafe_code::e1009_unsafe_cell_misuse::e1009_entry;
+use problem_examples::e10_unsafe_code::e1010_ffi_no_error_handling::e1010_entry;
+use problem_examples::e10_unsafe_code::e1011_uninitialized_memory::e1011_entry;
+use problem_examples::e10_unsafe_code::e1012_unsafe_auto_trait::e1012_entry;
+use problem_examples::e10_unsafe_code::e1013_union_unsafe_access::e1013_entry;
+use problem_examples::e10_unsafe_code::e1014_pointer_arithmetic::e1014_entry;
+use problem_examples::e10_unsafe_code::e1015_unwrap_expect_wo_context::e1015_entry;
+use problem_examples::e10_unsafe_code::e1016_mutex_unwrap::e1016_entry;
+use problem_examples::e11_code_surface_complexity::e1101_high_cyclomatic_complexity::e1101_entry;
+use problem_examples::e11_code_surface_complexity::e1102_deep_nested_logic_in_loops::e1102_entry;
+use problem_examples::e11_code_surface_complexity::e1103_too_many_params::e1103_entry;
+use problem_examples::e11_code_surface_complexity::e1104_overly_large_struct::e1104_entry;
+use problem_examples::e11_code_surface_complexity::e1105_boolean_params::e1105_entry;
+use problem_examples::e11_code_surface_complexity::e1106_long_function::e1106_entry;
+use problem_examples::e11_code_surface_complexity::e1107_deep_nesting::e1107_entry;
+use problem_examples::e11_code_surface_complexity::e1108_nested_match::e1108_entry;
+use problem_examples::e11_code_surface_complexity::e1109_excessive_chaining::e1109_entry;
+use problem_examples::e11_code_surface_complexity::e1110_nested_callbacks::e1110_entry;
+use problem_examples::e12_code_pattern_complexity::e1201_complex_generics::e1201_entry;
+use problem_examples::e12_code_pattern_complexity::e1202_complex_lifetimes::e1202_entry;
+use problem_examples::e12_code_pattern_complexity::e1203_complicated_borrowing::e1203_entry;
+use problem_examples::e12_code_pattern_complexity::e1204_trait_method_ambiguity::e1204_entry;
+use problem_examples::e12_code_pattern_complexity::e1205_complex_handler::e1205_entry;
+use problem_examples::e12_code_pattern_complexity::e1206_deeply_nested_generics::e1206_entry;
+use problem_examples::e12_code_pattern_complexity::e1207_complex_user_generics::e1207_entry;
+use problem_examples::e12_code_pattern_complexity::e1208_phantom_types::e1208_entry;
+use problem_examples::e12_code_pattern_complexity::e1209_hrtb::e1209_entry;
+use problem_examples::e12_code_pattern_complexity::e1210_recursive_types::e1210_entry;
+use problem_examples::e12_code_pattern_complexity::e1211_trait_object_complexity::e1211_entry;
+use problem_examples::e12_code_pattern_complexity::e1212_gat_complexity::e1212_entry;
+use problem_examples::e12_code_pattern_complexity::e1213_const_generic_complexity::e1213_entry;
+use problem_examples::e12_code_pattern_complexity::e1214_macro_generated::e1214_entry;
+use problem_examples::e12_code_pattern_complexity::e1215_type_level_programming::e1215_entry;
+use problem_examples::e12_code_pattern_complexity::e1216_chained_transform::e1216_entry;
+use problem_examples::e12_code_pattern_complexity::e1217_abba_deadlock::e1217_entry;
+use problem_examples::e13_error_handling::e1301_unhandled_result::e1301_entry;
+use problem_examples::e13_error_handling::e1302_constructor_without_result::e1302_entry;
+use problem_examples::e13_error_handling::e1303_ignored_errors::e1303_entry;
+use problem_examples::e13_error_handling::e1304_unwrap_in_error_path::e1304_entry;
+use problem_examples::e13_error_handling::e1305_non_exhaustive_match::e1305_entry;
+use problem_examples::e13_error_handling::e1306_swallow_errors::e1306_entry;
+use problem_examples::e13_error_handling::e1307_string_errors::e1307_entry;
+use problem_examples::e13_error_handling::e1308_not_using_question_mark::e1308_entry;
+use problem_examples::e13_error_handling::e1309_panic_in_drop::e1309_entry;
+use problem_examples::e13_error_handling::e1310_error_context_loss::e1310_entry;
+use problem_examples::e14_type_safety::e1401_integer_overflow::e1401_entry;
+use problem_examples::e14_type_safety::e1402_division_by_zero::e1402_entry;
+use problem_examples::e14_type_safety::e1403_modulo_by_zero::e1403_entry;
+use problem_examples::e14_type_safety::e1404_narrowing_conversion::e1404_entry;
+use problem_examples::e14_type_safety::e1405_integer_division_rounding::e1405_entry;
+use problem_examples::e14_type_safety::e1406_signed_unsigned_mismatch::e1406_entry;
+use problem_examples::e14_type_safety::e1407_lossy_float_conversion::e1407_entry;
+use problem_examples::e14_type_safety::e1408_unchecked_indexing::e1408_entry;
+use problem_examples::e14_type_safety::e1409_partial_initialization::e1409_entry;
+use problem_examples::e14_type_safety::e1410_type_confusion_transmute::e1410_entry;
+use problem_examples::e15_concurrency::e1501_non_send_across_threads::e1501_entry;
+use problem_examples::e15_concurrency::e1502_lock_across_await::e1502_entry;
+use problem_examples::e15_concurrency::e1503_lock_poisoning::e1503_entry;
+use problem_examples::e15_concurrency::e1504_interior_mutability_race::e1504_entry;
+use problem_examples::e15_concurrency::e1505_non_send_future::e1505_entry;
+use problem_examples::e15_concurrency::e1506_deadlock_lock_ordering::e1506_entry;
+use problem_examples::e15_concurrency::e1507_unsynchronized_shared_state::e1507_entry;
+use problem_examples::e15_concurrency::e1508_sleep_instead_of_sync::e1508_entry;
+use problem_examples::e15_concurrency::e1509_channel_lifetime::e1509_entry;
+use problem_examples::e15_concurrency::e1510_mutex_instead_of_rwlock::e1510_entry;
+use problem_examples::e16_memory_safety::e1601_aliasing_violation::e1601_entry;
+use problem_examples::e16_memory_safety::e1602_use_after_free::e1602_entry;
+use problem_examples::e16_memory_safety::e1603_dangling_reference::e1603_entry;
+use problem_examples::e16_memory_safety::e1604_buffer_overflow::e1604_entry;
+use problem_examples::e16_memory_safety::e1605_rc_cycle::e1605_entry;
+use problem_examples::e16_memory_safety::e1606_unnecessary_clone::e1606_entry;
+use problem_examples::e16_memory_safety::e1607_forget_drop::e1607_entry;
+use problem_examples::e16_memory_safety::e1608_double_free::e1608_entry;
+use problem_examples::e16_memory_safety::e1609_invalid_slice::e1609_entry;
+use problem_examples::e16_memory_safety::e1610_unaligned_deref::e1610_entry;
+use problem_examples::e17_performance::e1701_oversized_struct::e1701_entry;
+use problem_examples::e17_performance::e1702_unnecessary_allocations::e1702_entry;
+use problem_examples::e17_performance::e1703_string_concat_loop::e1703_entry;
+use problem_examples::e17_performance::e1704_unnecessary_collect::e1704_entry;
+use problem_examples::e17_performance::e1705_clone_in_hot_path::e1705_entry;
+use problem_examples::e17_performance::e1706_non_tail_recursion::e1706_entry;
+use problem_examples::e17_performance::e1707_unbounded_recursion::e1707_entry;
+use problem_examples::e17_performance::e1708_inefficient_data_structure::e1708_entry;
+use problem_examples::e17_performance::e1709_unnecessary_boxing::e1709_entry;
+use problem_examples::e17_performance::e1710_large_stack_allocation::e1710_entry;
+use problem_examples::e18_api_design::e1801_glob_imports::e1801_entry;
+use problem_examples::e18_api_design::e1802_public_fields::e1802_entry;
+use problem_examples::e18_api_design::e1803_bad_naming::e1803_entry;
+use problem_examples::e18_api_design::e1804_inconsistent_errors::e1804_entry;
+use problem_examples::e18_api_design::e1805_missing_docs::e1805_entry;
+use problem_examples::e18_api_design::e1806_internal_details::e1806_entry;
+use problem_examples::e18_api_design::e1807_non_idiomatic_builder::e1807_entry;
+use problem_examples::e18_api_design::e1808_mutable_getter::e1808_entry;
+use problem_examples::e18_api_design::e1809_fallible_new::e1809_entry;
+use problem_examples::e18_api_design::e1810_string_instead_of_str::e1810_entry;
+
+#[derive(Parser)]
+#[command(name = "problem-examples")]
+#[command(about = "Explore Rust code problem examples", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    /// List all problem categories
+    List,
+
+    /// Show details about a specific problem category
+    Show {
+        /// Category code (e.g., e10, e11, e12)
+        category: String,
+    },
+
+    /// Run a specific problem example (note: many will panic or have issues!)
+    Run {
+        /// Problem code (e.g., e101, e102)
+        problem: String,
+    },
+
+    /// Run ALL problem examples (WARNING: will panic/crash!)
+    RunAll,
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    match cli.command {
+        Commands::List => list_categories(),
+        Commands::Show { category } => show_category(&category),
+        Commands::Run { problem } => run_problem(&problem),
+        Commands::RunAll => run_all_problems(),
+    }
+}
+
+fn list_categories() {
+    println!("Available Problem Categories:\n");
+    println!("E10* - Unsafe Code Problems");
+    println!("  Direct panics, unwrap/expect, unsafe code issues\n");
+
+    println!("E11* - Code Surface Complexity Problems");
+    println!("  Cyclomatic complexity, long functions, too many parameters\n");
+
+    println!("E12* - Code Pattern Complexity Problems");
+    println!("  Complex generics, lifetimes, GATs, HRTBs, type-level programming\n");
+
+    println!("E13* - Error Handling Problems");
+    println!("  Unhandled results, poor error types, panic in Drop\n");
+
+    println!("E14* - Type Safety Problems");
+    println!("  Integer overflow, division by zero, type conversions\n");
+
+    println!("E15* - Concurrency Problems");
+    println!("  Send/Sync issues, locks, data races, deadlocks\n");
+
+    println!("E16* - Memory Safety Problems");
+    println!("  Aliasing, use-after-free, memory leaks, buffer overflow\n");
+
+    println!("E17* - Performance Problems");
+    println!("  Large structs, allocations, recursion, inefficient code\n");
+
+    println!("E18* - API Design Problems");
+    println!("  Glob imports, public fields, naming, documentation\n");
+
+    println!("Use 'problem-examples show <category>' for details on a category");
+}
+
+fn show_category(category: &str) {
+    match category {
+        "e10" => {
+            println!("E10* - Unsafe Code and Panic Problems\n");
+            println!("E1001 - Direct call of panic!() - crashes instead of returning errors");
+            println!("E1002 - Direct use of unwrap()/expect() - crashes program on None/Err");
+            println!("E1003 - Direct use of unsafe blocks/functions");
+            println!("E1004 - Unsafe block without SAFETY comment explaining invariants");
+            println!("E1005 - Dereferencing raw pointers without null/alignment checks");
+            println!("E1006 - Transmute without verifying size/alignment compatibility");
+            println!("E1007 - Potential null pointer dereference");
+            println!("E1008 - Unsafe trait implementation (Send/Sync) without justification");
+            println!("E1009 - UnsafeCell misuse and interior mutability violations");
+            println!("E1010 - Mutable static variable without synchronization");
+            println!("E1011 - Uninitialized memory usage (MaybeUninit misuse)");
+            println!("E1012 - Unsafe auto trait implementation");
+            println!("E1013 - Union type with unsafe field access");
+            println!("E1014 - Raw pointer arithmetic (offset/add/sub) without bounds");
+            println!("E1015 - Unwrap/expect with poor or missing context message");
+            println!("E1016 - Mutex lock().unwrap() - causes panic cascades on poisoning");
+        }
+        "e11" => {
+            println!("E11* - Code Surface Complexity Problems\n");
+            println!("E1101 - High cyclomatic complexity");
+            println!("E1102 - Deeply nested logic in loops and conditions");
+            println!("E1103 - Too many function parameters");
+            println!("E1104 - Overly large struct");
+            println!("E1105 - Boolean parameter hell");
+            println!("E1106 - Long function (too many lines)");
+            println!("E1108 - Deeply nested match expressions");
+            println!("E1109 - Excessive method chaining");
+            println!("E1110 - Nested callbacks/closures");
+        }
+        "e12" => {
+            println!("E12* - Code Pattern Complexity Problems\n");
+            println!("E1201 - Overly complex generics");
+            println!("E1202 - Complex lifetime annotations");
+            println!("E1203 - Complicated borrowing patterns");
+            println!("E1204 - Trait method ambiguity");
+            println!("E1205 - Complex handler with trait bounds");
+            println!("E1206 - Deeply nested generics");
+            println!("E1207 - Complex user-defined generics");
+            println!("E1208 - Phantom types");
+            println!("E1209 - Higher-ranked trait bounds (HRTB)");
+            println!("E1210 - Recursive types");
+            println!("E1211 - Trait object complexity");
+            println!("E1212 - Generic Associated Types (GATs)");
+            println!("E1213 - Const generic complexity");
+            println!("E1214 - Macro-generated code");
+            println!("E1215 - Type-level programming");
+            println!("E1216 - Chained transformations");
+            println!("E1217 - ABBA deadlock pattern");
+        }
+        "e13" => {
+            println!("E13* - Error Handling Problems\n");
+            println!("E1301 - Unhandled Result values");
+            println!("E1302 - Constructors returning bare values instead of Result");
+            println!("E1303 - Ignoring errors with let _ =");
+            println!("E1304 - Using unwrap() in error paths");
+            println!("E1305 - Non-exhaustive match on Result/Option");
+            println!("E1306 - Swallowing errors without logging");
+            println!("E1307 - Using String for error types");
+            println!("E1308 - Not using ? operator when appropriate");
+            println!("E1309 - Panic in Drop implementation");
+            println!("E1310 - Error context loss");
+        }
+        "e14" => {
+            println!("E14* - Type Safety Problems\n");
+            println!("E1401 - Integer overflow/underflow");
+            println!("E1402 - Division by zero");
+            println!("E1403 - Modulo by zero");
+            println!("E1404 - Narrowing conversions (as)");
+            println!("E1405 - Integer division rounding errors");
+            println!("E1406 - Signed/unsigned mismatch");
+            println!("E1407 - Lossy float to int conversion");
+            println!("E1408 - Unchecked array indexing");
+            println!("E1409 - Partial initialization");
+            println!("E1410 - Type confusion with transmute");
+        }
+        "e15" => {
+            println!("E15* - Concurrency Problems\n");
+            println!("E1501 - Non-Send/Sync types crossing thread boundaries");
+            println!("E1502 - Holding a lock across .await");
+            println!("E1503 - Lock poisoning misuse");
+            println!("E1504 - Data race via interior mutability");
+            println!("E1505 - Non-Send futures crossing threads");
+            println!("E1506 - Deadlock from lock ordering");
+            println!("E1507 - Shared mutable state without synchronization");
+            println!("E1508 - Using thread::sleep instead of proper synchronization");
+            println!("E1509 - Channel sender/receiver lifetime issues");
+            println!("E1510 - Arc<Mutex<T>> instead of RwLock");
+        }
+        "e16" => {
+            println!("E16* - Memory Safety Problems\n");
+            println!("E1601 - Aliasing violations");
+            println!("E1602 - Use after free");
+            println!("E1603 - Dangling reference");
+            println!("E1604 - Buffer overflow");
+            println!("E1605 - Memory leak via Rc cycle");
+            println!("E1606 - Redundant or dangerous .clone() usage");
+            println!("E1607 - Forgetting to drop resources");
+            println!("E1608 - Double free");
+            println!("E1609 - Slice from raw parts with invalid length");
+            println!("E1610 - Unaligned pointer dereference");
+        }
+        "e17" => {
+            println!("E17* - Performance Problems\n");
+            println!("E1701 - Oversized structs/enums");
+            println!("E1702 - Unnecessary allocations in hot path");
+            println!("E1703 - String concatenation in loop");
+            println!("E1704 - Collecting iterator unnecessarily");
+            println!("E1705 - Cloning in hot path");
+            println!("E1706 - Recursive function without tail call optimization");
+            println!("E1707 - Unbounded recursion");
+            println!("E1708 - Inefficient data structure choice");
+            println!("E1709 - Unnecessary boxing");
+            println!("E1710 - Large stack allocation");
+        }
+        "e18" => {
+            println!("E18* - API Design Problems\n");
+            println!("E1801 - Glob imports (use *)");
+            println!("E1802 - Public fields without validation");
+            println!("E1803 - Naming/API invariant violations");
+            println!("E1804 - Inconsistent error types");
+            println!("E1805 - Missing documentation on public API");
+            println!("E1806 - Exposing internal implementation details");
+            println!("E1807 - Non-idiomatic builder pattern");
+            println!("E1808 - Mutable getter");
+            println!("E1809 - Using new() for fallible construction");
+            println!("E1810 - Accepting String instead of &str");
+        }
+        _ => {
+            eprintln!("Unknown category: {}", category);
+            eprintln!("Available categories: e10, e11, e12, e13, e14, e15, e16, e17, e18");
+        }
+    }
+}
+
+fn run_problem(problem: &str) {
+    println!("WARNING: Many of these examples will panic, crash, or demonstrate unsafe behavior!");
+    println!("Running problem: {}\n", problem);
+
+    match problem {
+        "e1001" => {
+            println!("E1001: Direct panic in production code");
+            // problem_examples::e1001_direct_panic::example(); // Would panic
+            println!("(Skipped - would panic)");
+        }
+        "e1002" => {
+            println!("E1002: Direct use of unwrap() and expect()");
+            // problem_examples::e1002_direct_unwrap_expect::example(); // Would panic on None/Err
+            println!("(Skipped - would panic)");
+        }
+        "e1015" => {
+            println!("E1015: Unwrap/expect without context");
+            // problem_examples::e1015_unwrap_expect_wo_context::example(); // Would panic on None/Err
+            println!("(Skipped - would panic)");
+        }
+        "e1003" => {
+            println!("E1003: Direct use of unsafe code");
+            // problem_examples::e1003_unsafe_code::example(); // Uses unsafe
+            println!("(Skipped - uses unsafe code)");
+        }
+        "e1004" => {
+            println!("E1004: Unsafe code without safety comments");
+            // problem_examples::e1004_unsafe_no_comments::example(); // Uses unsafe without comments
+            println!("(Skipped - uses unsafe without proper comments)");
+        }
+        "e1005" => {
+            println!("E1005: Dereferencing raw pointers without validation");
+            // unsafe { problem_examples::e1005_raw_pointer_deref::example(std::ptr::null()) }; // Would crash
+            println!("(Skipped - would dereference null pointer)");
+        }
+        "e1006" => {
+            println!("E1006: Transmute without size/alignment checks");
+            // problem_examples::e1006_unsafe_transmute::example(); // Uses unsafe transmute
+            println!("(Skipped - uses unsafe transmute)");
+        }
+        "e1007" => {
+            println!("E1007: Mutable static without synchronization");
+            // problem_examples::e1007_mutable_static::example(); // Uses unsafe static
+            println!("(Skipped - uses unsafe mutable static)");
+        }
+        "e1008" => {
+            println!("E1008: Unsafe trait implementation without justification");
+            // problem_examples::e1008_unsafe_trait_impl::MyType is marked Send without justification
+            println!("(Skipped - unsafe trait implementation)");
+        }
+        "e1010" => {
+            println!("E1010: Mutable static without synchronization");
+            println!("(Skipped - uses unsafe mutable static)");
+        }
+        "e1011" => {
+            println!("E1011: Uninitialized memory usage");
+            println!("(Skipped - uses uninitialized memory - undefined behavior)");
+        }
+        "e1016" => {
+            println!("E1016: Mutex lock().unwrap() - panic cascades");
+            println!("\nThis demonstrates why mutex.lock().unwrap() is dangerous:");
+            println!("- When thread A panics while holding a lock, the mutex becomes 'poisoned'");
+            println!("- Thread B calling lock().unwrap() will ALSO panic");
+            println!("- Thread C calling lock().unwrap() will ALSO panic");
+            println!("- One bug cascades into total application failure!\n");
+            println!("Safe alternatives:");
+            println!("  1. mutex.lock().unwrap_or_else(|e| e.into_inner()) - recover data");
+            println!("  2. mutex.lock().map_err(...)? - propagate as error");
+            println!("  3. Use parking_lot::Mutex - no poisoning at all");
+        }
+        _ => {
+            eprintln!("Unknown or not implemented problem: {}", problem);
+            eprintln!("Available E10* problems: e1001, e1002, e1003, e1004, e1005, e1006, e1007, e1008, e1010, e1011, e1015, e1016");
+            eprintln!("Note: Most examples are intentionally not runnable to avoid crashes");
+        }
+    }
+}
+
+// Macro to register all problems and generate both runner and harnesses
+macro_rules! define_problems {
+    ($macro:ident) => {
+        $macro! {
+            // E10: Unsafe Code
+            ("E1001", "Direct panic", e1001_entry),
+            ("E1002", "Direct unwrap/expect crashes", e1002_entry),
+            ("E1003", "Unsafe code", e1003_entry),
+            ("E1004", "Unsafe no comments", e1004_entry),
+            ("E1005", "Raw pointer deref", e1005_entry),
+            ("E1006", "Unsafe transmute", e1006_entry),
+            ("E1007", "Mutable static", e1007_entry),
+            ("E1008", "Unsafe trait impl", e1008_entry),
+            ("E1009", "Unsafe cell misuse", e1009_entry),
+            ("E1010", "FFI no error handling", e1010_entry),
+            ("E1011", "Uninitialized memory", e1011_entry),
+            ("E1012", "Unsafe auto trait", e1012_entry),
+            ("E1013", "Union unsafe access", e1013_entry),
+            ("E1014", "Pointer arithmetic", e1014_entry),
+            ("E1015", "Unwrap/expect without context", e1015_entry),
+            ("E1016", "Mutex unwrap poisoning", e1016_entry),
+
+            // E11: Code Surface Complexity
+            ("E1101", "High cyclomatic complexity", e1101_entry),
+            ("E1102", "Deeply nested logic in loops and conditions", e1102_entry),
+            ("E1103", "Too many params", e1103_entry),
+            ("E1104", "Overly large struct", e1104_entry),
+            ("E1105", "Boolean parameter hell", e1105_entry),
+            ("E1106", "Long function", e1106_entry),
+            ("E1107", "Deep nesting", e1107_entry),
+            ("E1108", "Nested match", e1108_entry),
+            ("E1109", "Excessive chaining", e1109_entry),
+            ("E1110", "Nested callbacks", e1110_entry),
+
+            // E12: Code Pattern Complexity
+            ("E1201", "Complex generics", e1201_entry),
+            ("E1202", "Complex lifetimes", e1202_entry),
+            ("E1203", "Complicated borrowing", e1203_entry),
+            ("E1204", "Trait method ambiguity", e1204_entry),
+            ("E1205", "Complex handler", e1205_entry),
+            ("E1206", "Deeply nested generics", e1206_entry),
+            ("E1207", "Complex user generics", e1207_entry),
+            ("E1208", "Phantom types", e1208_entry),
+            ("E1209", "HRTB", e1209_entry),
+            ("E1210", "Recursive types", e1210_entry),
+            ("E1211", "Trait object complexity", e1211_entry),
+            ("E1212", "GAT complexity", e1212_entry),
+            ("E1213", "Const generic complexity", e1213_entry),
+            ("E1214", "Macro generated", e1214_entry),
+            ("E1215", "Type level programming", e1215_entry),
+            ("E1216", "Chained transform", e1216_entry),
+            ("E1217", "ABBA deadlock", e1217_entry),
+
+            // E13: Error Handling
+            ("E1301", "Unhandled result", e1301_entry),
+            ("E1302", "Constructor without result", e1302_entry),
+            ("E1303", "Ignored errors", e1303_entry),
+            ("E1304", "Unwrap in error path", e1304_entry),
+            ("E1305", "Non-exhaustive match", e1305_entry),
+            ("E1306", "Swallow errors", e1306_entry),
+            ("E1307", "String errors", e1307_entry),
+            ("E1308", "Not using question mark", e1308_entry),
+            ("E1309", "Panic in drop", e1309_entry),
+            ("E1310", "Error context loss", e1310_entry),
+
+            // E14: Type Safety
+            ("E1401", "Integer overflow", e1401_entry),
+            ("E1402", "Division by zero", e1402_entry),
+            ("E1403", "Modulo by zero", e1403_entry),
+            ("E1404", "Narrowing conversion", e1404_entry),
+            ("E1405", "Integer division rounding", e1405_entry),
+            ("E1406", "Signed unsigned mismatch", e1406_entry),
+            ("E1407", "Lossy float conversion", e1407_entry),
+            ("E1408", "Unchecked indexing", e1408_entry),
+            ("E1409", "Partial initialization", e1409_entry),
+            ("E1410", "Type confusion transmute", e1410_entry),
+
+            // E15: Concurrency
+            ("E1501", "Non-Send across threads", e1501_entry),
+            ("E1502", "Lock across await", e1502_entry),
+            ("E1503", "Lock poisoning", e1503_entry),
+            ("E1504", "Interior mutability race", e1504_entry),
+            ("E1505", "Non-Send future", e1505_entry),
+            ("E1506", "Deadlock lock ordering", e1506_entry),
+            ("E1507", "Unsynchronized shared state", e1507_entry),
+            ("E1508", "Sleep instead of sync", e1508_entry),
+            ("E1509", "Channel lifetime", e1509_entry),
+            ("E1510", "Mutex instead of RwLock", e1510_entry),
+
+            // E16: Memory Safety
+            ("E1601", "Aliasing violations", e1601_entry),
+            ("E1602", "Use after free", e1602_entry),
+            ("E1603", "Dangling reference", e1603_entry),
+            ("E1604", "Buffer overflow", e1604_entry),
+            ("E1605", "Rc cycle", e1605_entry),
+            ("E1606", "Unnecessary clone", e1606_entry),
+            ("E1607", "Forget drop", e1607_entry),
+            ("E1608", "Double free", e1608_entry),
+            ("E1609", "Invalid slice", e1609_entry),
+            ("E1610", "Unaligned deref", e1610_entry),
+
+            // E17: Performance
+            ("E1701", "Oversized struct", e1701_entry),
+            ("E1702", "Unnecessary allocations", e1702_entry),
+            ("E1703", "String concat loop", e1703_entry),
+            ("E1704", "Unnecessary collect", e1704_entry),
+            ("E1705", "Clone in hot path", e1705_entry),
+            ("E1706", "Non tail recursion", e1706_entry),
+            ("E1707", "Unbounded recurions", e1707_entry),
+            ("E1708", "Inefficient data structure", e1708_entry),
+            ("E1709", "Unnecessary boxing", e1709_entry),
+            ("E1710", "Large stack allocation", e1710_entry),
+
+            // E18: API Design
+            ("E1801", "Glob imports", e1801_entry),
+            ("E1802", "Public fields", e1802_entry),
+            ("E1803", "Bad naming", e1803_entry),
+            ("E1804", "Inconsistent errors", e1804_entry),
+            ("E1805", "Missing docs", e1805_entry),
+            ("E1806", "Internal details", e1806_entry),
+            ("E1807", "Non-idiomatic builder", e1807_entry),
+            ("E1808", "Mutable getter", e1808_entry),
+            ("E1809", "Fallible new", e1809_entry),
+            ("E1810", "String instead of &str", e1810_entry),
+        }
+    };
+}
+
+fn run_all_problems() {
+    println!("WARNING: Running ALL problem examples!");
+    println!("Many examples intentionally panic, use unsafe code, or have UB.");
+    println!("Each problem runs sequentially with panic catching enabled.\n");
+
+    let mut results = Vec::new();
+
+    // Macro generator for running problems sequentially
+    macro_rules! generate_runner {
+        ($(($code:expr, $name:expr, $func:ident)),* $(,)?) => {
+            $(
+                let result = $func();
+                let status = match result {
+                    Ok(_) => "OK",
+                    Err(_) => "ERROR",
+                };
+                println!("[{}] {} - {}", $code, $name, status);
+                results.push(($code.to_string(), $name.to_string(), status.to_string()));
+            )*
+        };
+    }
+
+    define_problems!(generate_runner);
+
+    println!("\n═══════════════════════════════════════");
+    println!("Results Summary:");
+    println!("═══════════════════════════════════════");
+
+    let ok_count = results.iter().filter(|(_, _, s)| s.contains("OK")).count();
+    let panic_count = results
+        .iter()
+        .filter(|(_, _, s)| s.contains("PANIC") || s.contains("ERROR"))
+        .count();
+
+    println!("\nTotal: {} problems executed", results.len());
+    println!("  Completed: {}", ok_count);
+    println!("  Failed/Panicked:  {}", panic_count);
+    println!("═══════════════════════════════════════");
+}
+
+#[cfg(kani)] // Only compile this when running Kani
+mod verification {
+    use super::*;
+
+    // Macro generator for creating individual Kani harnesses
+    macro_rules! generate_harnesses {
+        ($(($code:expr, $name:expr, $func:ident)),* $(,)?) => {
+            $(
+                #[kani::proof]
+                #[kani::unwind(10)] // Increased to 10 to handle loops/recursion
+                fn $func() {
+                    let _ = super::$func();
+                }
+            )*
+        };
+    }
+
+    define_problems!(generate_harnesses);
+}

@@ -1,0 +1,22 @@
+[package]
+name = "hyp-analyzer-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "CLI tool for Hyp Rust code analyzer"
+
+[[bin]]
+name = "hyp"
+path = "src/main.rs"
+
+[dependencies]
+hyp-analyzer = { path = "../hyp-analyzer" }
+clap = { workspace = true, features = ["derive"] }
+anyhow = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = "0.9"
+walkdir = "2.0"
+syn = { version = "2.0", features = ["full"] }
+quote = "1.0"
