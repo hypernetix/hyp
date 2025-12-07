@@ -10,6 +10,7 @@ pub mod e1807_non_idiomatic_builder;
 pub mod e1808_mutable_getter;
 pub mod e1809_fallible_new;
 pub mod e1810_string_instead_of_str;
+pub mod e1812_non_exhaustive_enum;
 pub mod registry;
 
 pub use e1801_glob_imports::{E1801Config, E1801GlobImports};
@@ -22,3 +23,4 @@ pub use e1807_non_idiomatic_builder::{E1807Config, E1807NonIdiomaticBuilder};
 pub use e1808_mutable_getter::{E1808Config, E1808MutableGetter};
 pub use e1809_fallible_new::{E1809Config, E1809FallibleNew};
 pub use e1810_string_instead_of_str::{E1810Config, E1810StringInsteadOfStr};
+pub use e1812_non_exhaustive_enum::{E1812Config, E1812NonExhaustiveEnum};

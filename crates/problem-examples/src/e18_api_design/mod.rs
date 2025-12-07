@@ -10,3 +10,4 @@ pub mod e1807_non_idiomatic_builder;
 pub mod e1808_mutable_getter;
 pub mod e1809_fallible_new;
 pub mod e1810_string_instead_of_str;
+pub mod e1812_non_exhaustive_enum;

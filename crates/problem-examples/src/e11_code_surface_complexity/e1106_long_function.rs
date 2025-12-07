@@ -11,7 +11,7 @@
 /// the Single Responsibility Principle - each function should do one thing. Extract logical
 /// sections into helper functions with descriptive names.
 
-pub fn e1106_long_function(x: i32) -> i32 {
+pub fn e1106_bad_long_function(x: i32) -> i32 {
     // PROBLEM E1106: Function exceeds 250 lines
     let mut result = 0;
     result += x;
@@ -268,6 +268,82 @@ pub fn e1106_long_function(x: i32) -> i32 {
 }
 
 pub fn e1106_entry() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = e1106_long_function(42);
+    let _ = e1106_bad_long_function(1);
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Use a loop or iterator instead of repetitive code
+pub fn e1106_good_use_loop(x: i32) -> i32 {
+    let mut result = 0;
+    for i in 0..=250 {
+        result += x + i;
+    }
+    result
+}
+
+/// GOOD: Use iterator methods
+pub fn e1106_good_iterator(x: i32) -> i32 {
+    (0..=250).map(|i| x + i).sum()
+}
+
+/// GOOD: Break long functions into focused helpers
+fn e1106_good_validate_input(x: i32) -> Result<i32, &'static str> {
+    if x < 0 {
+        return Err("input must be non-negative");
+    }
+    Ok(x)
+}
+
+fn e1106_good_compute_base(x: i32) -> i32 {
+    (0..100).map(|i| x + i).sum()
+}
+
+fn e1106_good_compute_extended(x: i32) -> i32 {
+    (100..=250).map(|i| x + i).sum()
+}
+
+pub fn e1106_good_split_into_helpers(x: i32) -> Result<i32, &'static str> {
+    let x = e1106_good_validate_input(x)?;
+    let base = e1106_good_compute_base(x);
+    let extended = e1106_good_compute_extended(x);
+    Ok(base + extended)
+}
+
+/// GOOD: Use formula instead of iteration when possible
+pub fn e1106_good_formula(x: i32) -> i32 {
+    // Sum of (x + 0) + (x + 1) + ... + (x + 250)
+    // = 251 * x + (0 + 1 + 2 + ... + 250)
+    // = 251 * x + (250 * 251) / 2
+    let n = 250i64;
+    let count = n + 1;
+    let sum_of_offsets = (n * (n + 1)) / 2;
+    (count * x as i64 + sum_of_offsets) as i32
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1106_good_loop_matches_iterator() {
+        assert_eq!(e1106_good_use_loop(2), e1106_good_iterator(2));
+    }
+
+    #[test]
+    fn e1106_good_formula_matches_loop() {
+        assert_eq!(e1106_good_use_loop(3), e1106_good_formula(3));
+    }
+
+    #[test]
+    fn e1106_good_split_helpers_validates_input() {
+        assert!(e1106_good_split_into_helpers(-1).is_err());
+    }
 }

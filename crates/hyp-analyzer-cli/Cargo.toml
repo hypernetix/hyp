@@ -15,8 +15,3 @@ path = "src/main.rs"
 hyp-analyzer = { path = "../hyp-analyzer" }
 clap = { workspace = true, features = ["derive"] }
 anyhow = { workspace = true }
-serde_json = { workspace = true }
-serde_yaml = "0.9"
-walkdir = "2.0"
-syn = { version = "2.0", features = ["full"] }
-quote = "1.0"

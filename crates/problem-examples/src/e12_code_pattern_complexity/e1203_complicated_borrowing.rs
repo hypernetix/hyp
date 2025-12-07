@@ -20,7 +20,7 @@
 //
 // PROBLEM E1203: Complex interleaving of borrows
 #[allow(clippy::get_first)]
-pub fn e1203_complicated_borrowing() {
+pub fn e1203_bad_complicated_borrowing() {
     let mut data = vec![1, 2, 3];
     let r1 = &data;
     let r2 = &data;
@@ -32,6 +32,6 @@ pub fn e1203_complicated_borrowing() {
 }
 
 pub fn e1203_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1203_complicated_borrowing();
+    e1203_bad_complicated_borrowing();
     Ok(())
 }

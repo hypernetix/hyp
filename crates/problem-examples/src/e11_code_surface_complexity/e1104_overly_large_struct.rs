@@ -51,7 +51,7 @@ pub struct E1104OversizedConfig {
 
 impl E1104OversizedConfig {
     // PROBLEM E1104: Constructor is unwieldy with so many fields
-    pub fn e1104_overly_large_struct() -> Self {
+    pub fn e1104_bad_overly_large_struct() -> Self {
         Self {
             host: String::from("localhost"),
             port: 8080,
@@ -89,6 +89,134 @@ impl E1104OversizedConfig {
 }
 
 pub fn e1104_entry() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = E1104OversizedConfig::e1104_overly_large_struct();
+    let _ = E1104OversizedConfig::e1104_bad_overly_large_struct();
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Group related fields into nested structs
+pub struct GoodNetworkConfig {
+    pub host: String,
+    pub port: u16,
+    pub timeout_ms: u64,
+    pub retry_count: u32,
+    pub max_connections: usize,
+}
+
+pub struct GoodTlsConfig {
+    pub enabled: bool,
+    pub cert_path: String,
+    pub key_path: String,
+}
+
+pub struct GoodLoggingConfig {
+    pub enabled: bool,
+    pub level: String,
+    pub file_path: String,
+}
+
+pub struct GoodCacheConfig {
+    pub enabled: bool,
+    pub ttl_sec: u64,
+    pub max_size: usize,
+}
+
+/// GOOD: Main config struct with focused sub-configs
+pub struct GoodConfig {
+    pub network: GoodNetworkConfig,
+    pub tls: GoodTlsConfig,
+    pub logging: GoodLoggingConfig,
+    pub cache: GoodCacheConfig,
+}
+
+impl Default for GoodConfig {
+    fn default() -> Self {
+        Self {
+            network: GoodNetworkConfig {
+                host: "localhost".to_string(),
+                port: 8080,
+                timeout_ms: 5000,
+                retry_count: 3,
+                max_connections: 100,
+            },
+            tls: GoodTlsConfig {
+                enabled: false,
+                cert_path: String::new(),
+                key_path: String::new(),
+            },
+            logging: GoodLoggingConfig {
+                enabled: true,
+                level: "info".to_string(),
+                file_path: "/var/log/app.log".to_string(),
+            },
+            cache: GoodCacheConfig {
+                enabled: true,
+                ttl_sec: 300,
+                max_size: 1000,
+            },
+        }
+    }
+}
+
+/// GOOD: Use builder pattern for complex configs
+pub struct GoodConfigBuilder {
+    config: GoodConfig,
+}
+
+impl GoodConfigBuilder {
+    pub fn new() -> Self {
+        Self {
+            config: GoodConfig::default(),
+        }
+    }
+
+    pub fn e1104_good_with_host(mut self, host: &str) -> Self {
+        self.config.network.host = host.to_string();
+        self
+    }
+
+    pub fn e1104_good_with_tls(mut self, cert: &str, key: &str) -> Self {
+        self.config.tls.enabled = true;
+        self.config.tls.cert_path = cert.to_string();
+        self.config.tls.key_path = key.to_string();
+        self
+    }
+
+    pub fn e1104_good_build(self) -> GoodConfig {
+        self.config
+    }
+}
+
+impl Default for GoodConfigBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1104_good_config_defaults_populate_fields() {
+        let cfg = GoodConfig::default();
+        assert_eq!(cfg.network.port, 8080);
+    }
+
+    #[test]
+    fn e1104_good_builder_sets_host_and_tls() {
+        let cfg = GoodConfigBuilder::new()
+            .e1104_good_with_host("api.example.com")
+            .e1104_good_with_tls("/c.pem", "/k.pem")
+            .e1104_good_build();
+        assert_eq!(cfg.network.host, "api.example.com");
+        assert!(cfg.tls.enabled);
+    }
 }

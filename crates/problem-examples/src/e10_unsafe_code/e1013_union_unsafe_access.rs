@@ -33,14 +33,14 @@ pub struct TaggedValue {
 }
 
 impl TaggedValue {
-    pub fn e1013_union_unsafe_access_int(val: i32) -> Self {
+    pub fn e1013_bad_union_unsafe_access_int(val: i32) -> Self {
         TaggedValue {
             tag: ValueTag::Int,
             value: Value { int: val },
         }
     }
 
-    pub fn e1013_union_unsafe_access_float(val: f32) -> Self {
+    pub fn e1013_bad_union_unsafe_access_float(val: f32) -> Self {
         TaggedValue {
             tag: ValueTag::Float,
             value: Value { float: val },
@@ -48,17 +48,17 @@ impl TaggedValue {
     }
 
     // PROBLEM E1013: Easy to call get_int when value is actually float
-    pub unsafe fn get_int(&self) -> i32 {
+    pub unsafe fn e1013_bad_get_int(&self) -> i32 {
         self.value.int
     }
 
-    pub unsafe fn get_float(&self) -> f32 {
+    pub unsafe fn e1013_bad_get_float(&self) -> f32 {
         self.value.float
     }
 }
 
 // PROBLEM E1013: Transmuting between union fields
-pub fn e1013_union_transmute() {
+pub fn e1013_bad_union_transmute() {
     let val = Value {
         int: 0x3f80_0000_u32 as i32,
     };
@@ -73,6 +73,122 @@ pub fn e1013_union_transmute() {
 }
 
 pub fn e1013_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1013_union_transmute();
+    let tagged = TaggedValue::e1013_bad_union_unsafe_access_int(10);
+    unsafe {
+        let _ = tagged.e1013_bad_get_int();
+    }
+    e1013_bad_union_transmute();
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Use an enum instead of a union - compiler tracks active variant
+#[derive(Debug, Clone)]
+pub enum SafeValue {
+    Int(i32),
+    Float(f32),
+    Bytes([u8; 4]),
+}
+
+impl SafeValue {
+    pub fn e1013_good_as_int(&self) -> Option<i32> {
+        match self {
+            SafeValue::Int(v) => Some(*v),
+            _ => None,
+        }
+    }
+
+    pub fn e1013_good_as_float(&self) -> Option<f32> {
+        match self {
+            SafeValue::Float(v) => Some(*v),
+            _ => None,
+        }
+    }
+}
+
+/// GOOD: For bit reinterpretation, use explicit safe methods
+pub fn e1013_good_bit_conversion() {
+    let int_bits: u32 = 0x3f80_0000;
+
+    // Safe way to reinterpret bits
+    let as_float = f32::from_bits(int_bits);
+    println!("Float value: {}", as_float); // 1.0
+
+    // Convert back
+    let back_to_bits = as_float.to_bits();
+    assert_eq!(int_bits, back_to_bits);
+}
+
+/// GOOD: If union is required, encapsulate safely
+pub struct SafeTaggedValue {
+    tag: ValueTag,
+    value: Value,
+}
+
+impl SafeTaggedValue {
+    pub fn e1013_good_new_int(val: i32) -> Self {
+        SafeTaggedValue {
+            tag: ValueTag::Int,
+            value: Value { int: val },
+        }
+    }
+
+    pub fn e1013_good_new_float(val: f32) -> Self {
+        SafeTaggedValue {
+            tag: ValueTag::Float,
+            value: Value { float: val },
+        }
+    }
+
+    /// Safe accessor - checks tag before accessing union
+    pub fn e1013_good_get_int(&self) -> Option<i32> {
+        match self.tag {
+            ValueTag::Int => {
+                // SAFETY: We verified the tag is Int
+                Some(unsafe { self.value.int })
+            }
+            _ => None,
+        }
+    }
+
+    pub fn e1013_good_get_float(&self) -> Option<f32> {
+        match self.tag {
+            ValueTag::Float => {
+                // SAFETY: We verified the tag is Float
+                Some(unsafe { self.value.float })
+            }
+            _ => None,
+        }
+    }
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1013_good_safe_value_accessors_work() {
+        let val = SafeValue::Int(42);
+        assert_eq!(val.e1013_good_as_int(), Some(42));
+        assert_eq!(val.e1013_good_as_float(), None);
+    }
+
+    #[test]
+    fn e1013_good_safe_tagged_value_checks_tags() {
+        let val = SafeTaggedValue::e1013_good_new_float(1.5);
+        assert_eq!(val.e1013_good_get_float(), Some(1.5));
+        assert_eq!(val.e1013_good_get_int(), None);
+    }
+
+    #[test]
+    fn e1013_good_bit_conversion_round_trips() {
+        e1013_good_bit_conversion();
+    }
 }

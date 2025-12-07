@@ -9,6 +9,7 @@ pub mod e1406_signed_unsigned_mismatch;
 pub mod e1407_lossy_float_conversion;
 pub mod e1408_unchecked_indexing;
 pub mod e1409_partial_initialization;
+pub mod e1410_float_equality;
 pub mod registry;
 
 pub use e1401_integer_overflow::{E1401Config, E1401IntegerOverflow};
@@ -20,3 +21,4 @@ pub use e1406_signed_unsigned_mismatch::{E1406Config, E1406SignedUnsignedMismatc
 pub use e1407_lossy_float_conversion::{E1407Config, E1407LossyFloatConversion};
 pub use e1408_unchecked_indexing::{E1408Config, E1408UncheckedIndexing};
 pub use e1409_partial_initialization::{E1409Config, E1409PartialInitialization};
+pub use e1410_float_equality::{E1410Config, E1410FloatEquality};

@@ -59,33 +59,32 @@
 /// `unwrap_or_else()`, `ok_or()`. Only use unwrap() when you can PROVE the value exists.
 
 /// PROBLEM E1002: Direct unwrap - crashes on None
-pub fn e1002_option_unwrap() -> i32 {
-    let data: Option<i32> = Some(42);
+pub fn e1002_bad_option_unwrap(data: Option<i32>) -> i32 {
     data.unwrap() // What if data is None? Program crashes!
 }
 
 /// PROBLEM E1002: Direct unwrap on Result - crashes on Err
-pub fn e1002_result_unwrap() -> String {
-    let content = std::fs::read_to_string("config.txt").unwrap();
+pub fn e1002_bad_result_unwrap(content_file: String) -> String {
+    let content = std::fs::read_to_string(content_file).unwrap();
     // What if file doesn't exist? Permission denied? Disk full?
     // Program crashes with unhelpful message!
     content
 }
 
 /// PROBLEM E1002: expect() is just unwrap() with a message - still crashes!
-pub fn e1002_expect_still_crashes() -> i32 {
+pub fn e1002_bad_expect_still_crashes() -> i32 {
     let value: Result<i32, &str> = Err("something went wrong");
     value.expect("this will crash") // Crashes! expect() doesn't recover, just adds a message
 }
 
 /// PROBLEM E1002: Chain of unwraps - any one can crash
-pub fn e1002_chained_unwraps() {
+pub fn e1002_bad_chained_unwraps() {
     let nested: Option<Option<i32>> = Some(Some(42));
     let _value = nested.unwrap().unwrap(); // TWO potential crash points!
 }
 
 /// PROBLEM E1002: unwrap() in iterator - crashes mid-processing
-pub fn e1002_unwrap_in_iterator() {
+pub fn e1002_bad_unwrap_in_iterator() {
     let items = vec!["1", "2", "not_a_number", "4"];
     let _numbers: Vec<i32> = items
         .iter()
@@ -94,38 +93,49 @@ pub fn e1002_unwrap_in_iterator() {
 }
 
 /// PROBLEM E1002: unwrap() hides the actual error
-pub fn e1002_unwrap_hides_error() {
+pub fn e1002_bad_unwrap_hides_error() {
     let json = r#"{"name": invalid}"#; // Invalid JSON
     let _parsed: serde_json::Value = serde_json::from_str(json).unwrap();
     // Crash! But what was wrong? Where? What input caused it?
     // With proper error handling, you could show: "Parse error at line 1, column 10"
 }
 
+/// Entry point for problem demonstration
+pub fn e1002_entry() -> Result<(), Box<dyn std::error::Error>> {
+    // These would crash - demonstrating the problem
+    let data: Option<i32> = Some(42);
+    e1002_bad_option_unwrap(data);
+
+    // let content_file = "config.txt".to_string();
+    // e1002_bad_result_unwrap(content_file);
+    Ok(())
+}
+
 // ============================================================================
-// GOOD ALTERNATIVES - How to handle errors properly
+// GOOD EXAMPLES - How to handle errors properly
 // ============================================================================
 
 /// GOOD: Return Result to let caller decide
-pub fn good_return_result() -> Result<i32, &'static str> {
+fn good_return_result() -> Result<i32, &'static str> {
     let data: Option<i32> = None;
     data.ok_or("value was not present")
 }
 
 /// GOOD: Use ? operator for propagation
-pub fn good_question_mark() -> std::io::Result<String> {
+fn good_question_mark() -> std::io::Result<String> {
     let content = std::fs::read_to_string("config.txt")?;
     // Error automatically propagated to caller with full context!
     Ok(content)
 }
 
 /// GOOD: Provide defaults for optional values
-pub fn good_unwrap_or_default() -> i32 {
+fn good_unwrap_or_default() -> i32 {
     let data: Option<i32> = None;
     data.unwrap_or(0) // Safe! Returns 0 if None
 }
 
 /// GOOD: Use if let for conditional handling
-pub fn good_if_let() {
+fn good_if_let() {
     let data: Option<i32> = Some(42);
     if let Some(value) = data {
         println!("Got value: {}", value);
@@ -135,7 +145,7 @@ pub fn good_if_let() {
 }
 
 /// GOOD: Use match for exhaustive handling
-pub fn good_match_handling() -> Result<(), String> {
+fn good_match_handling() -> Result<(), String> {
     let result: Result<i32, &str> = Err("failed");
     match result {
         Ok(value) => {
@@ -149,20 +159,6 @@ pub fn good_match_handling() -> Result<(), String> {
     }
 }
 
-/// Entry point for problem demonstration
-pub fn e1002_entry() -> Result<(), Box<dyn std::error::Error>> {
-    // These would crash - demonstrating the problem
-    // e1002_option_unwrap();
-    // e1002_result_unwrap();
-
-    // Safe alternatives work fine
-    let _ = good_return_result();
-    let _ = good_unwrap_or_default();
-    good_if_let();
-    let _ = good_match_handling();
-
-    Ok(())
-}
 
 #[cfg(test)]
 mod tests {

@@ -20,7 +20,7 @@
 // The function returns a tuple of the first 3 parameters wrapped in a Result.
 //
 // PROBLEM E1201: Too many type parameters and complex bounds
-pub fn e1201_complex_generics<T, U, V, W, X>(
+pub fn e1201_bad_complex_generics<T, U, V, W, X>(
     _a: T,
     _b: U,
     _c: V,
@@ -38,6 +38,6 @@ where
 }
 
 pub fn e1201_entry() -> Result<(), Box<dyn std::error::Error>> {
-    let _ = e1201_complex_generics(1_i32, String::from("b"), 0_i32, 2_i32, 3_i32);
+    let _ = e1201_bad_complex_generics(1_i32, String::from("b"), 0_i32, 2_i32, 3_i32);
     Ok(())
 }

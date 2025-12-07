@@ -10,3 +10,4 @@ pub mod e1407_lossy_float_conversion;
 pub mod e1408_unchecked_indexing;
 pub mod e1409_partial_initialization;
 pub mod e1410_type_confusion_transmute;
+pub mod e1410_float_equality;

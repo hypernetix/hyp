@@ -61,7 +61,7 @@ impl Debug for Data {
 // For example, <Data as Display>::format(&data) explicitly calls the Display trait's format method.
 //
 // PROBLEM E1204: Must use fully qualified syntax to disambiguate
-pub fn e1204_trait_method_ambiguity() {
+pub fn e1204_bad_trait_method_ambiguity() {
     let data = Data { value: 42 };
 
     let _display = <Data as Display>::format(&data);
@@ -70,6 +70,6 @@ pub fn e1204_trait_method_ambiguity() {
 }
 
 pub fn e1204_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1204_trait_method_ambiguity();
+    e1204_bad_trait_method_ambiguity();
     Ok(())
 }

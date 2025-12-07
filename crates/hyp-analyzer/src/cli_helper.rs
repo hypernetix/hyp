@@ -1,6 +1,10 @@
 //! Shared helper functions for CLI frontends.
+//!
+//! This module provides reusable CLI functionality that can be used by both
+//! the default `hyp` CLI and custom CLI tools built on top of `hyp-analyzer`.
 
-use std::{collections::HashSet, path::PathBuf};
+use std::{collections::HashMap, collections::HashSet, path::Path, path::PathBuf};
+use walkdir::WalkDir;
 
 use crate::{
     analyzer::{Analyzer, AnalyzerFilters},
@@ -17,6 +21,41 @@ pub enum CliOutputFormat {
     Text,
     /// JSON output.
     Json,
+}
+
+/// Load configuration from file path.
+///
+/// Supports both TOML (Hyp.toml) and YAML (hyp.yaml) formats.
+/// The format is auto-detected based on file extension.
+pub fn load_config(config_path: &Path) -> Result<AnalyzerConfig> {
+    if !config_path.exists() {
+        return Ok(AnalyzerConfig::default());
+    }
+
+    let content = std::fs::read_to_string(config_path)?;
+    let extension = config_path.extension().and_then(|e| e.to_str()).unwrap_or("");
+
+    match extension.to_lowercase().as_str() {
+        "toml" => {
+            AnalyzerConfig::from_toml(&content).map_err(|e| {
+                crate::AnalyzerError::Config(format!("TOML parse error: {}", e))
+            })
+        }
+        "yaml" | "yml" => {
+            AnalyzerConfig::from_yaml(&content).map_err(|e| {
+                crate::AnalyzerError::Config(format!("YAML parse error: {}", e))
+            })
+        }
+        _ => {
+            // Try TOML first (for Hyp.toml without extension matching), then YAML
+            AnalyzerConfig::from_toml(&content)
+                .map_err(|e| crate::AnalyzerError::Config(format!("TOML parse error: {}", e)))
+                .or_else(|_| {
+                    AnalyzerConfig::from_yaml(&content)
+                        .map_err(|e| crate::AnalyzerError::Config(format!("YAML parse error: {}", e)))
+                })
+        }
+    }
 }
 
 /// Generic CLI options structure that any CLI frontend can use.
@@ -70,6 +109,22 @@ pub fn filter_registrations(
     registrations: Vec<CheckerRegistration>,
     opts: &CliOptions,
 ) -> Vec<CheckerRegistration> {
+    filter_registrations_with_config(registrations, opts, None)
+}
+
+/// Apply CLI include/exclude filtering AND config-based category filtering.
+///
+/// Config supports category-level disabling:
+/// ```toml
+/// [checkers]
+/// e11.enabled = false  # Disables all E11xx checkers
+/// e14.enabled = false  # Disables all E14xx checkers
+/// ```
+pub fn filter_registrations_with_config(
+    registrations: Vec<CheckerRegistration>,
+    opts: &CliOptions,
+    config: Option<&AnalyzerConfig>,
+) -> Vec<CheckerRegistration> {
     let include_patterns: Option<Vec<String>> = opts
         .include
         .as_ref()
@@ -79,10 +134,42 @@ pub fn filter_registrations(
         .as_ref()
         .map(|v| v.iter().map(|s| s.to_lowercase()).collect());
 
+    // Extract category-level disabled prefixes from config (e.g., e11, e14)
+    let disabled_prefixes: Vec<String> = config
+        .map(|cfg| {
+            cfg.checkers
+                .iter()
+                .filter_map(|(key, value)| {
+                    // Check for category-level keys like "e11", "e14" (2-3 chars, starting with 'e')
+                    let key_lc = key.to_lowercase();
+                    if key_lc.starts_with('e')
+                        && key_lc.len() <= 3
+                        && key_lc[1..].chars().all(|c| c.is_ascii_digit())
+                    {
+                        // Check if .enabled = false
+                        if let Some(enabled) = value.get("enabled") {
+                            if enabled == false {
+                                return Some(key_lc);
+                            }
+                        }
+                    }
+                    None
+                })
+                .collect()
+        })
+        .unwrap_or_default();
+
     registrations
         .into_iter()
         .filter(|reg| {
             let code_lc = reg.descriptor.code.to_lowercase();
+
+            // Check if disabled by category-level config (e.g., e11.enabled = false)
+            for prefix in &disabled_prefixes {
+                if code_lc.starts_with(prefix) {
+                    return false;
+                }
+            }
 
             // If include is present, only allow codes that match any include pattern
             if let Some(ref patterns) = include_patterns {
@@ -111,12 +198,7 @@ pub fn print_checker_list_from_registrations(
     registrations: Vec<CheckerRegistration>,
 ) -> Result<()> {
     // Load config (same as run_cli)
-    let config = if opts.config_path.exists() {
-        let yaml = std::fs::read_to_string(&opts.config_path)?;
-        AnalyzerConfig::from_yaml(&yaml)?
-    } else {
-        AnalyzerConfig::default()
-    };
+    let config = load_config(&opts.config_path)?;
 
     // Build filters (severity/category already populated in opts)
     let mut filters = AnalyzerFilters::default();
@@ -127,7 +209,7 @@ pub fn print_checker_list_from_registrations(
         filters.categories = Some(cats);
     }
 
-    let registrations = filter_registrations(registrations, opts);
+    let registrations = filter_registrations_with_config(registrations, opts, Some(&config));
     let analyzer = build_analyzer_from_registrations(config, filters, registrations);
 
     println!("\nEligible Checkers:\n");
@@ -160,12 +242,7 @@ pub fn print_guidelines_from_registrations(
     registrations: Vec<CheckerRegistration>,
 ) -> Result<()> {
     // Load config (same as run_cli)
-    let config = if opts.config_path.exists() {
-        let yaml = std::fs::read_to_string(&opts.config_path)?;
-        AnalyzerConfig::from_yaml(&yaml)?
-    } else {
-        AnalyzerConfig::default()
-    };
+    let config = load_config(&opts.config_path)?;
 
     // Build filters (severity/category already populated in opts)
     let mut filters = AnalyzerFilters::default();
@@ -176,7 +253,7 @@ pub fn print_guidelines_from_registrations(
         filters.categories = Some(cats);
     }
 
-    let registrations = filter_registrations(registrations, opts);
+    let registrations = filter_registrations_with_config(registrations, opts, Some(&config));
     let analyzer = build_analyzer_from_registrations(config, filters, registrations);
 
     println!("Do not use the following patterns:\n");
@@ -196,12 +273,7 @@ where
     F: FnOnce() -> Vec<CheckerRegistration>,
 {
     // 1. Load configuration
-    let config = if opts.config_path.exists() {
-        let yaml = std::fs::read_to_string(&opts.config_path)?;
-        AnalyzerConfig::from_yaml(&yaml)?
-    } else {
-        AnalyzerConfig::default()
-    };
+    let config = load_config(&opts.config_path)?;
 
     // 2. Build filters
     let mut filters = AnalyzerFilters::default();
@@ -212,8 +284,8 @@ where
         filters.categories = Some(cats.clone());
     }
 
-    // 3. Get registrations, apply include/exclude, and build analyzer
-    let registrations = filter_registrations(make_registrations(), &opts);
+    // 3. Get registrations, apply include/exclude and config category filtering, build analyzer
+    let registrations = filter_registrations_with_config(make_registrations(), &opts, Some(&config));
     let analyzer = build_analyzer_from_registrations(config, filters, registrations);
 
     // 4. Print enabled checkers (non-verbose mode)
@@ -420,4 +492,504 @@ pub fn analyze_with_verbose(
     });
 
     Ok(all_violations)
+}
+
+// =============================================================================
+// Configuration Discovery
+// =============================================================================
+
+/// Find Hyp.toml by searching current directory and parent directories.
+///
+/// Returns the path to the first `Hyp.toml` found, or a default path if none exists.
+pub fn find_config_file() -> PathBuf {
+    let mut current = std::env::current_dir().unwrap_or_else(|_| PathBuf::from("."));
+
+    loop {
+        let config_path = current.join("Hyp.toml");
+        if config_path.exists() {
+            return config_path;
+        }
+
+        if !current.pop() {
+            // Reached filesystem root, return default (non-existent) path
+            return PathBuf::from("Hyp.toml");
+        }
+    }
+}
+
+/// Print the effective configuration in TOML format.
+///
+/// This generates a complete TOML configuration showing all available checkers
+/// with their default settings. Useful for users to see what can be configured.
+pub fn print_default_config<F>(
+    registrations_fn: F,
+    include: Option<&str>,
+    exclude: Option<&str>,
+    severity: Option<u8>,
+) -> Result<()>
+where
+    F: FnOnce() -> Vec<CheckerRegistration>,
+{
+    let registrations = registrations_fn();
+
+    println!("# Hyp Configuration");
+    println!("# Place this in Hyp.toml to customize checker behavior");
+    println!();
+    println!("[checkers]");
+
+    for reg in &registrations {
+        let desc = &reg.descriptor;
+        let code = desc.code.to_lowercase();
+        let name: String = desc
+            .name
+            .to_lowercase()
+            .chars()
+            .map(|c| if c.is_alphanumeric() { c } else { '_' })
+            .collect();
+        let key = format!("{}_{}", code, name.chars().take(30).collect::<String>());
+
+        // Apply filters
+        if let Some(min_sev) = severity {
+            if desc.default_severity.as_u8() < min_sev {
+                continue;
+            }
+        }
+        if let Some(include_str) = include {
+            let patterns: Vec<&str> = include_str.split(',').map(|s| s.trim()).collect();
+            if !patterns
+                .iter()
+                .any(|p| code.contains(&p.to_lowercase()))
+            {
+                continue;
+            }
+        }
+        if let Some(exclude_str) = exclude {
+            let patterns: Vec<&str> = exclude_str.split(',').map(|s| s.trim()).collect();
+            if patterns
+                .iter()
+                .any(|p| code.contains(&p.to_lowercase()))
+            {
+                continue;
+            }
+        }
+
+        println!();
+        println!("# {} - {}", desc.code, desc.name);
+        println!("{}.enabled = true", key);
+        println!("{}.severity = {}", key, desc.default_severity.as_u8());
+        println!("{}.categories = {:?}", key, desc.default_categories);
+    }
+
+    Ok(())
+}
+
+// =============================================================================
+// Example Validation
+// =============================================================================
+
+/// Result of validating a single function in problem examples.
+#[derive(Debug)]
+pub struct FunctionValidation {
+    /// File path containing the function.
+    pub file: String,
+    /// Function name.
+    pub function: String,
+    /// Expected error code (e.g., "E1001").
+    pub error_code: String,
+    /// Whether detection is expected (true for bad_ functions, false for good_).
+    pub expected_detection: bool,
+    /// Error codes actually detected in this function.
+    pub detected_codes: Vec<String>,
+}
+
+impl FunctionValidation {
+    /// Check if this validation passed.
+    pub fn is_valid(&self) -> bool {
+        if self.expected_detection {
+            // For bad functions: should detect at least the expected error code
+            self.detected_codes
+                .iter()
+                .any(|c| c.to_uppercase() == self.error_code.to_uppercase())
+        } else {
+            // For good functions: should NOT detect the corresponding error code
+            !self
+                .detected_codes
+                .iter()
+                .any(|c| c.to_uppercase() == self.error_code.to_uppercase())
+        }
+    }
+}
+
+/// Summary of validation results.
+#[derive(Debug, Default)]
+pub struct ValidationSummary {
+    /// Total files processed.
+    pub files_processed: usize,
+    /// Total functions validated.
+    pub total_functions: usize,
+    /// Bad functions correctly detected.
+    pub bad_passed: usize,
+    /// Total bad functions.
+    pub bad_total: usize,
+    /// Good functions correctly ignored.
+    pub good_passed: usize,
+    /// Total good functions.
+    pub good_total: usize,
+    /// Functions where bad code wasn't detected.
+    pub bad_not_detected: Vec<FunctionValidation>,
+    /// Functions where good code was incorrectly flagged.
+    pub good_incorrectly_detected: Vec<FunctionValidation>,
+}
+
+impl ValidationSummary {
+    /// Total number of issues (failures).
+    pub fn total_issues(&self) -> usize {
+        self.bad_not_detected.len() + self.good_incorrectly_detected.len()
+    }
+
+    /// Whether all validations passed.
+    pub fn all_passed(&self) -> bool {
+        self.total_issues() == 0
+    }
+}
+
+/// Run validation on problem examples to verify checkers work correctly.
+///
+/// This validates that:
+/// - All `eXXXX_bad_*` functions trigger at least the corresponding EXXXX error
+/// - All `eXXXX_good_*` functions do NOT trigger any EXXXX error
+///
+/// # Arguments
+/// * `source` - Path to the problem-examples source directory
+/// * `registrations_fn` - Function that returns checker registrations to use
+///
+/// # Returns
+/// A `ValidationSummary` containing all results.
+pub fn run_validation<F>(source: &Path, registrations_fn: F) -> Result<ValidationSummary>
+where
+    F: FnOnce() -> Vec<CheckerRegistration>,
+{
+    // Collect all Rust files
+    let rust_files: Vec<_> = WalkDir::new(source)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .filter(|e| {
+            e.path().extension().is_some_and(|ext| ext == "rs")
+                && !e.path().ends_with("mod.rs")
+                && !e.path().ends_with("lib.rs")
+        })
+        .collect();
+
+    if rust_files.is_empty() {
+        return Ok(ValidationSummary::default());
+    }
+
+    // Create analyzer with all checkers enabled
+    let config = AnalyzerConfig::default();
+    let registrations = registrations_fn();
+    let analyzer = Analyzer::new_with_checkers(
+        config,
+        AnalyzerFilters::default(),
+        registrations,
+    );
+
+    let mut all_validations: Vec<FunctionValidation> = Vec::new();
+    let mut files_processed = 0;
+
+    for entry in &rust_files {
+        let path = entry.path();
+        let file_content = match std::fs::read_to_string(path) {
+            Ok(c) => c,
+            Err(_) => continue,
+        };
+
+        // Parse the file to find function names
+        let functions = extract_function_names(&file_content);
+        if functions.is_empty() {
+            continue;
+        }
+
+        files_processed += 1;
+
+        // Run analyzer on the file
+        let violations = match analyzer.analyze_file(path) {
+            Ok(v) => v,
+            Err(_) => continue,
+        };
+
+        // Build a map of line -> detected error codes
+        let mut line_to_codes: HashMap<usize, Vec<String>> = HashMap::new();
+        for v in &violations {
+            line_to_codes
+                .entry(v.line)
+                .or_default()
+                .push(v.code.clone());
+        }
+
+        // Build a map of function name -> lines
+        let function_lines = map_functions_to_lines(&file_content, &functions);
+
+        // Check each function
+        for (func_name, (start_line, end_line)) in &function_lines {
+            // Extract error code from function name
+            let error_code = match extract_error_code(func_name) {
+                Some(code) => code,
+                None => continue,
+            };
+
+            // Determine if this is a bad or good function
+            let is_bad = func_name.contains("_bad_") && !func_name.ends_with("_entry");
+            let is_good = func_name.contains("_good_");
+
+            if !is_bad && !is_good {
+                continue;
+            }
+
+            // Collect all error codes detected within this function's line range
+            let mut detected_codes: Vec<String> = Vec::new();
+            for line in *start_line..=*end_line {
+                if let Some(codes) = line_to_codes.get(&line) {
+                    detected_codes.extend(codes.iter().cloned());
+                }
+            }
+
+            // Remove duplicates
+            let detected_codes: Vec<String> = detected_codes
+                .into_iter()
+                .collect::<HashSet<_>>()
+                .into_iter()
+                .collect();
+
+            all_validations.push(FunctionValidation {
+                file: path.display().to_string(),
+                function: func_name.clone(),
+                error_code,
+                expected_detection: is_bad,
+                detected_codes,
+            });
+        }
+    }
+
+    // Build summary
+    let mut summary = ValidationSummary {
+        files_processed,
+        total_functions: all_validations.len(),
+        ..Default::default()
+    };
+
+    for v in all_validations {
+        if v.expected_detection {
+            summary.bad_total += 1;
+            if v.is_valid() {
+                summary.bad_passed += 1;
+            } else {
+                summary.bad_not_detected.push(v);
+            }
+        } else {
+            summary.good_total += 1;
+            if v.is_valid() {
+                summary.good_passed += 1;
+            } else {
+                summary.good_incorrectly_detected.push(v);
+            }
+        }
+    }
+
+    Ok(summary)
+}
+
+/// Print validation results to stdout.
+pub fn print_validation_results(summary: &ValidationSummary) {
+    // Print violations
+    if !summary.bad_not_detected.is_empty() {
+        println!("❌ BAD FUNCTIONS NOT DETECTED ({}):", summary.bad_not_detected.len());
+        println!("   These eXXXX_bad_* functions should trigger EXXXX but didn't:\n");
+        for v in &summary.bad_not_detected {
+            println!("   * {}", v.file);
+            println!("     Function: {}", v.function);
+            println!("     Expected: {} error", v.error_code.to_uppercase());
+            if v.detected_codes.is_empty() {
+                println!("     Detected: (none)");
+            } else {
+                println!("     Detected: {}", v.detected_codes.join(", "));
+            }
+            println!();
+        }
+    }
+
+    if !summary.good_incorrectly_detected.is_empty() {
+        println!(
+            "❌ GOOD FUNCTIONS INCORRECTLY DETECTED ({}):",
+            summary.good_incorrectly_detected.len()
+        );
+        println!("   These eXXXX_good_* functions should NOT trigger EXXXX but did:\n");
+        for v in &summary.good_incorrectly_detected {
+            println!("   * {}", v.file);
+            println!("     Function: {}", v.function);
+            println!("     Unexpected: {} detected", v.error_code.to_uppercase());
+            println!("     All detected: {}", v.detected_codes.join(", "));
+            println!();
+        }
+    }
+
+    // Summary
+    println!("===================================================================================");
+    println!("                                 VALIDATION SUMMARY");
+    println!("===================================================================================\n");
+
+    println!("Files processed: {}", summary.files_processed);
+    println!("Total functions chcked: {}\n", summary.total_functions);
+
+    println!(
+        "Bad functions (eXXXX_bad_*):  {} out of {} not detected ({}%)",
+        summary.bad_total - summary.bad_passed, summary.bad_total, ((summary.bad_total - summary.bad_passed) as f64 / summary.bad_total as f64 * 100.0) as u8
+    );
+    println!(
+        "Good functions (eXXXX_good_*): {} out of {} has problems ({}%)\n",
+        summary.good_total - summary.good_passed, summary.good_total, ((summary.good_total - summary.good_passed) as f64 / summary.good_total as f64 * 100.0) as u8
+    );
+
+    if summary.all_passed() {
+        println!("✅ All validations passed!");
+    } else {
+        println!("❌ {} validation issues found", summary.total_issues());
+        println!("\nTo fix these issues:");
+        if !summary.bad_not_detected.is_empty() {
+            println!("  • Implement or fix hyp checkers to detect the missing patterns");
+            println!("  • Or update the _bad_ functions if they don't actually demonstrate the problem");
+        }
+        if !summary.good_incorrectly_detected.is_empty() {
+            println!("  • Fix hyp checkers that are too aggressive");
+            println!("  • Or rename _good_ functions if they actually contain problems");
+        }
+    }
+}
+
+// =============================================================================
+// Internal helpers for validation
+// =============================================================================
+
+/// Extract function names from source code using syn.
+fn extract_function_names(content: &str) -> Vec<String> {
+    let mut functions = Vec::new();
+
+    if let Ok(file) = syn::parse_file(content) {
+        for item in &file.items {
+            if let syn::Item::Fn(func) = item {
+                functions.push(func.sig.ident.to_string());
+            }
+            if let syn::Item::Impl(impl_block) = item {
+                for item in &impl_block.items {
+                    if let syn::ImplItem::Fn(method) = item {
+                        functions.push(method.sig.ident.to_string());
+                    }
+                }
+            }
+        }
+    }
+
+    functions
+}
+
+/// Extract error code from function name (e.g., "e1001_bad_panic" -> "E1001").
+fn extract_error_code(func_name: &str) -> Option<String> {
+    // Look for pattern like e1001, e1234, etc.
+    let re = regex::Regex::new(r"e(\d{4})").ok()?;
+    if let Some(caps) = re.captures(func_name) {
+        if let Some(m) = caps.get(0) {
+            return Some(m.as_str().to_uppercase());
+        }
+    }
+    None
+}
+
+/// Map function names to their line ranges in the source.
+fn map_functions_to_lines(content: &str, functions: &[String]) -> HashMap<String, (usize, usize)> {
+    let mut result = HashMap::new();
+
+    if let Ok(file) = syn::parse_file(content) {
+        for item in &file.items {
+            if let syn::Item::Fn(func) = item {
+                let name = func.sig.ident.to_string();
+                if functions.contains(&name) {
+                    let start = func.sig.ident.span().start().line;
+                    let end = estimate_function_end(content, start);
+                    result.insert(name, (start, end));
+                }
+            }
+            if let syn::Item::Impl(impl_block) = item {
+                for item in &impl_block.items {
+                    if let syn::ImplItem::Fn(method) = item {
+                        let name = method.sig.ident.to_string();
+                        if functions.contains(&name) {
+                            let start = method.sig.ident.span().start().line;
+                            let end = estimate_function_end(content, start);
+                            result.insert(name, (start, end));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    result
+}
+
+/// Estimate the end line of a function by counting braces.
+fn estimate_function_end(content: &str, start_line: usize) -> usize {
+    let lines: Vec<&str> = content.lines().collect();
+    let mut brace_count = 0;
+    let mut found_first_brace = false;
+
+    for (i, line) in lines.iter().enumerate().skip(start_line.saturating_sub(1)) {
+        for ch in line.chars() {
+            if ch == '{' {
+                brace_count += 1;
+                found_first_brace = true;
+            } else if ch == '}' {
+                brace_count -= 1;
+            }
+        }
+
+        if found_first_brace && brace_count == 0 {
+            return i + 1; // 1-indexed
+        }
+    }
+
+    // If we can't find the end, return a reasonable estimate
+    (start_line + 50).min(lines.len())
+}
+
+/// Helper to split comma-separated string into Vec.
+pub fn split_csv(s: &str) -> Vec<String> {
+    s.split(',')
+        .map(|p| p.trim().to_string())
+        .filter(|p| !p.is_empty())
+        .collect()
+}
+
+/// Parse category string into HashSet.
+pub fn parse_categories(category: &Option<String>) -> Option<HashSet<CheckerCategory>> {
+    if let Some(cat_str) = category {
+        let set: HashSet<CheckerCategory> = cat_str
+            .split(',')
+            .filter_map(|s| {
+                let trimmed_s = s.trim();
+                if let Some(category) = CheckerCategory::parse_category(trimmed_s) {
+                    Some(category)
+                } else {
+                    eprintln!("Warning: Unknown category '{}', ignoring", trimmed_s);
+                    eprintln!("Valid categories: operations, complexity, compliance");
+                    None
+                }
+            })
+            .collect();
+        if set.is_empty() {
+            None
+        } else {
+            Some(set)
+        }
+    } else {
+        None
+    }
 }

@@ -35,7 +35,7 @@ pub trait Rejection {}
 // This creates layers upon layers of type requirements that are very hard to track.
 //
 // PROBLEM E1205: Extremely complex trait bounds that are hard to understand
-pub fn e1205_complex_handler<H, F, T, E>(
+pub fn e1205_bad_complex_handler<H, F, T, E>(
     handler: H,
     fallback: F,
 ) -> impl Future<Output = Result<T, E>>
@@ -72,6 +72,6 @@ pub fn e1205_entry() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     let handler = NoopHandler;
-    let _ = e1205_complex_handler(handler, fallback);
+    let _ = e1205_bad_complex_handler(handler, fallback);
     Ok(())
 }

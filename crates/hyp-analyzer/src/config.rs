@@ -86,9 +86,14 @@ pub struct AnalyzerConfig {
 }
 
 impl AnalyzerConfig {
-    /// Load configuration from YAML string
+    /// Load configuration from YAML string (legacy support)
     pub fn from_yaml(yaml: &str) -> Result<Self, serde_yaml::Error> {
         serde_yaml::from_str(yaml)
+    }
+
+    /// Load configuration from TOML string
+    pub fn from_toml(toml_str: &str) -> Result<Self, toml::de::Error> {
+        toml::from_str(toml_str)
     }
 
     /// Get configuration for a specific checker by key

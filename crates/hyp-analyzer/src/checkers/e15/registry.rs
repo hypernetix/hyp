@@ -5,7 +5,8 @@ use crate::{
     checkers::e15::{
         E1502Config, E1502LockAcrossAwait, E1503Config, E1503LockPoisoning, E1506Config,
         E1506DeadlockLockOrdering, E1508Config, E1508SleepInsteadOfSync, E1509Config,
-        E1509ChannelLifetime, E1510Config, E1510MutexInsteadOfRwLock,
+        E1509ChannelLifetime, E1510Config, E1510MutexInsteadOfRwLock, E1511Config,
+        E1511UnboundedSpawning,
     },
     register_checker,
     registry::CheckerRegistration,
@@ -20,5 +21,6 @@ pub fn e15_registrations() -> Vec<CheckerRegistration> {
         register_checker!(E1508SleepInsteadOfSync, E1508Config),
         register_checker!(E1509ChannelLifetime, E1509Config),
         register_checker!(E1510MutexInsteadOfRwLock, E1510Config),
+        register_checker!(E1511UnboundedSpawning, E1511Config),
     ]
 }

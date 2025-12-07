@@ -12,7 +12,7 @@
 /// `if let`, or the `?` operator for error handling. If unwrap is necessary, add a comment
 /// explaining why it's safe. Use `expect("descriptive message")` instead of bare `unwrap()`.
 
-pub fn e1015_unwrap_expect_wo_context() {
+pub fn e1015_bad_unwrap_expect_wo_context() {
     let data = Some(42);
 
     // PROBLEM E1002: direct unwrap/expect
@@ -25,6 +25,99 @@ pub fn e1015_unwrap_expect_wo_context() {
 }
 
 pub fn e1015_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1015_unwrap_expect_wo_context();
+    e1015_bad_unwrap_expect_wo_context();
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Use pattern matching for clear control flow
+pub fn e1015_good_pattern_matching(data: Option<i32>) -> i32 {
+    match data {
+        Some(value) => value,
+        None => {
+            eprintln!("Warning: data was None, using default");
+            0
+        }
+    }
+}
+
+/// GOOD: Use if let for simple cases
+pub fn e1015_good_if_let(data: Option<i32>) {
+    if let Some(value) = data {
+        println!("Got value: {}", value);
+    } else {
+        println!("No value available");
+    }
+}
+
+/// GOOD: Return Result to caller
+pub fn e1015_good_return_result(data: Option<i32>) -> Result<i32, &'static str> {
+    data.ok_or("required data was not provided")
+}
+
+/// GOOD: Use expect with descriptive message
+pub fn e1015_good_expect_with_context(config_path: &str) -> String {
+    std::fs::read_to_string(config_path)
+        .expect(&format!(
+            "Failed to read config file '{}' - file must exist and be readable",
+            config_path
+        ))
+}
+
+/// GOOD: Use unwrap_or with default
+pub fn e1015_good_unwrap_or_default(data: Option<i32>) -> i32 {
+    data.unwrap_or(0) // Clear default value
+}
+
+/// GOOD: Use unwrap_or_else for computed defaults
+pub fn e1015_good_unwrap_or_else(data: Option<i32>) -> i32 {
+    data.unwrap_or_else(|| {
+        eprintln!("Warning: using fallback value");
+        e1015_good_compute_fallback()
+    })
+}
+
+fn e1015_good_compute_fallback() -> i32 {
+    42
+}
+
+/// GOOD: Chain with map and unwrap_or
+pub fn e1015_good_map_chain(data: Option<String>) -> usize {
+    data.map(|s| s.len()).unwrap_or(0)
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1015_good_pattern_matching_handles_none() {
+        let value = e1015_good_pattern_matching(None);
+        assert_eq!(value, 0);
+    }
+
+    #[test]
+    fn e1015_good_return_result_errors_on_none() {
+        let result = e1015_good_return_result(None);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn e1015_good_unwrap_or_default_returns_value() {
+        assert_eq!(e1015_good_unwrap_or_default(Some(5)), 5);
+        assert_eq!(e1015_good_unwrap_or_default(None), 0);
+    }
+
+    #[test]
+    fn e1015_good_map_chain_counts_length() {
+        let size = e1015_good_map_chain(Some("abc".to_string()));
+        assert_eq!(size, 3);
+    }
 }

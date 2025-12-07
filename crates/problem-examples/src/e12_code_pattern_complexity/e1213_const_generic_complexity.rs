@@ -58,7 +58,7 @@ impl<const ROWS: usize, const COLS: usize> Matrix<ROWS, COLS> for DenseMatrix<RO
 }
 
 // PROBLEM E1213: Const generic in complex trait bound
-pub fn e1213_process_buffer<T, const N: usize>(buffer: &E1213FixedBuffer<T, N>)
+pub fn e1213_bad_process_buffer<T, const N: usize>(buffer: &E1213FixedBuffer<T, N>)
 where
     T: Default + Copy + std::fmt::Debug,
 {
@@ -83,5 +83,6 @@ pub struct Storage<C: SizedConfig> {
 
 pub fn e1213_entry() -> Result<(), Box<dyn std::error::Error>> {
     let _buffer: E1213FixedBuffer<i32, 10> = E1213FixedBuffer::e1213_const_generic_new();
+    let _ = e1213_bad_process_buffer(&_buffer);
     Ok(())
 }

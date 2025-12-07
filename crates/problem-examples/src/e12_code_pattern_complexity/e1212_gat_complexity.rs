@@ -71,11 +71,6 @@ impl<'data, T> LendingIterator for WindowsMut<'data, T> {
     }
 }
 
-pub fn e1212_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1212_gat_complexity();
-    Ok(())
-}
-
 // This trait has a GAT with TWO parameters - both a lifetime 'a AND a type T!
 // Item<'a, T> means the associated type is generic over both a lifetime and a type parameter.
 // This creates even more complexity than a single-parameter GAT.
@@ -97,7 +92,7 @@ pub trait StreamingIterator {
 // When we call .next(), the Item type's lifetime is inferred from the call context.
 //
 // PROBLEM E1212: Using GATs is confusing
-pub fn e1212_gat_complexity() {
+pub fn e1212_bad_gat_complexity() {
     let mut data = vec![1, 2, 3, 4, 5];
     let mut windows = WindowsMut {
         data: &mut data,
@@ -108,4 +103,10 @@ pub fn e1212_gat_complexity() {
     while let Some(_window) = windows.next() {
         // Process window
     }
+}
+
+
+pub fn e1212_entry() -> Result<(), Box<dyn std::error::Error>> {
+    e1212_bad_gat_complexity();
+    Ok(())
 }

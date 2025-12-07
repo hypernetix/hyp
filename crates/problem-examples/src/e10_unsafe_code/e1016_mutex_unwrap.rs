@@ -125,7 +125,7 @@ pub fn e1016_panic_cascade_demo() {
 }
 
 // ============================================================================
-// SAFE ALTERNATIVES
+// GOOD ALTERNATIVES
 // ============================================================================
 
 /// GOOD: Recover data despite poisoning

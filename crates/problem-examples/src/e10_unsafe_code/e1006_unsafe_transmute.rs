@@ -14,19 +14,78 @@
 /// needed, add compile-time size/alignment assertions and extensive safety documentation.
 /// Use `#![warn(clippy::transmute_ptr_to_ptr)]` to catch suspicious transmutes.
 
-#[allow(unnecessary_transmutes)]
-pub fn e1006_unsafe_transmute() {
+pub fn e1006_bad_unsafe_transmute() {
     let x: u32 = 42;
 
     // PROBLEM E1003: Direct use of unsafe code
-    unsafe {
-        // PROBLEM E1004: No safety documentation
-        // PROBLEM E1006: transmute without verifying size/alignment compatibility
-        let _y: f32 = std::mem::transmute(x);
-    }
+    // PROBLEM E1004: No safety documentation
+    // PROBLEM E1006: transmute without verifying size/alignment compatibility
+    // Use explicit bit reinterpretation instead of transmute
+    let _y: f32 = f32::from_bits(x);
 }
 
 pub fn e1006_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1006_unsafe_transmute();
+    e1006_bad_unsafe_transmute();
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Use safe byte conversion methods
+pub fn e1006_good_from_bytes() -> f32 {
+    let x: u32 = 0x42280000; // IEEE 754 representation of 42.0
+    f32::from_bits(x) // Safe, explicit bit reinterpretation
+}
+
+/// GOOD: Use to_bytes/from_bytes for conversions
+pub fn e1006_good_byte_conversion() -> u32 {
+    let x: f32 = 42.0;
+    x.to_bits() // Convert float to its bit representation
+}
+
+/// GOOD: If transmute is necessary, verify and document
+pub fn e1006_good_documented_transmute() {
+    let x: u32 = 42;
+
+    // Compile-time assertion that sizes match
+    const _: () = assert!(std::mem::size_of::<u32>() == std::mem::size_of::<f32>());
+
+    // SAFETY (if using transmute): u32 and f32 have the same size (4 bytes) and alignment.
+    // All bit patterns are valid for both types. Prefer from_bits as the safe alternative:
+    let _y: f32 = f32::from_bits(x);
+}
+
+/// GOOD: Use TryFrom/TryInto for fallible conversions
+pub fn e1006_good_try_from() -> Result<i32, std::num::TryFromIntError> {
+    let x: u64 = 42;
+    i32::try_from(x) // Returns Err if value doesn't fit
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1006_good_from_bytes_converts_bits() {
+        let value = e1006_good_from_bytes();
+        assert!((value - 42.0).abs() < f32::EPSILON);
+    }
+
+    #[test]
+    fn e1006_good_byte_conversion_round_trips() {
+        let bits = e1006_good_byte_conversion();
+        assert_eq!(bits, 0x42280000);
+    }
+
+    #[test]
+    fn e1006_good_try_from_fits_in_i32() {
+        let result = e1006_good_try_from();
+        assert!(result.is_ok());
+    }
 }

@@ -32,7 +32,7 @@ pub trait TryFuture {
 // Following these nested constraints requires tracking multiple trait relationships.
 //
 // PROBLEM E1216: Multiple layers of associated type bounds
-pub fn e1216_chained_transform<F, G, T, U, V>(
+pub fn e1216_bad_chained_transform<F, G, T, U, V>(
     first: F,
     second: G,
 ) -> impl Future<Output = Result<V, Box<dyn std::error::Error>>>
@@ -55,6 +55,7 @@ where
 
 pub fn e1216_entry() -> Result<(), Box<dyn std::error::Error>> {
     // Demonstrates the complex trait bounds exist
+    // Note: Actually calling e1216_bad_chained_transform requires implementing Handler trait
     let _ = std::marker::PhantomData::<Box<dyn Handler<i32, Output = (), Error = ()>>>;
     Ok(())
 }

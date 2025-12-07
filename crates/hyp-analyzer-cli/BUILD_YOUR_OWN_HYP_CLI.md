@@ -1,7 +1,6 @@
-# Step-by-Step: Create Your Own `cargo hyp-myproject`
+# Build Your Own Hyp CLI
 
-This guide shows how to set up a **standalone crate** (or workspace member) that produces
-a custom `cargo` subcommand combining Hyp's built-in checkers with your own.
+This guide shows how to create a custom `cargo` subcommand (e.g., `cargo hyp-myproject`) that combines Hyp's built-in checkers with your own project-specific rules.
 
 ## Architecture Overview
 
@@ -15,11 +14,11 @@ a custom `cargo` subcommand combining Hyp's built-in checkers with your own.
 │  │   (E1...)    │ │   (E2...)   │ │   (E3...)     │ │   (E4...)     │ │
 │  └──────────────┘ └─────────────┘ └───────────────┘ └───────────────┘ │
 ├───────────────────────────────────────────────────────────────────────┤
-│                 hyp-analyzer library with helpers                     │
+│            hyp-analyzer library (cli_helper + macros)                 │
 └───────────────────────────────────────────────────────────────────────┘
 ```
 
-## Creating your own hyp-myproject
+## Quick Start
 
 ### 1. Create the project
 
@@ -50,25 +49,120 @@ clap = { version = "4", features = ["derive"] }
 anyhow = "1"
 ```
 
-### 3. Define your custom checkers
+### 3. Create a minimal CLI (`src/main.rs`)
 
-Create `src/checkers/mod.rs` and individual checker files. Example structure:
-
-```
-src/
-├── main.rs
-└── checkers/
-    ├── mod.rs
-    ├── e2001_no_user_generics.rs   # E2xxx: Custom Rust rules
-    ├── e3001_dto_location.rs       # E3xxx: Repo layout rules
-    └── e4001_transaction_leak.rs   # E4xxx: Business logic rules
-```
-
-Use the `define_checker!` macro (same as Hyp's built-in checkers):
+The CLI is intentionally minimal - all shared logic lives in `hyp_analyzer::cli_helper`:
 
 ```rust
-// src/checkers/e4001_transaction_leak.rs
-use hyp_analyzer::{define_checker, violation::Violation, checker::Checker};
+use anyhow::Result;
+use clap::{Parser, Subcommand};
+use hyp_analyzer::{
+    cli_helper::{run_cli, print_checker_list_from_registrations},
+    find_config_file, get_all_checkers, parse_categories, split_csv,
+    CliOptions, CliOutputFormat, CheckerRegistration,
+    register_checker,
+};
+use std::path::PathBuf;
+
+mod checkers;
+use checkers::{E4001TransactionLeak, E4001Config};
+
+#[derive(Parser)]
+#[command(name = "cargo-hyp-myproject")]
+#[command(about = "Custom Hyp analyzer for MyProject")]
+struct Cli {
+    /// Cargo passes "hyp-myproject" as first arg when invoked as `cargo hyp-myproject`
+    #[arg(hide = true)]
+    _cargo_subcommand: Option<String>,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
+
+    #[arg(long, global = true)]
+    all: bool,
+
+    #[arg(long, global = true)]
+    include: Option<String>,
+
+    #[arg(long, global = true)]
+    exclude: Option<String>,
+
+    #[arg(long, global = true)]
+    severity: Option<u8>,
+
+    #[arg(long, global = true)]
+    category: Option<String>,
+
+    #[arg(short = 'f', long, default_value = "text", global = true)]
+    format: String,
+
+    #[arg(short = 'v', long, action = clap::ArgAction::Count, global = true)]
+    verbose: u8,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Check { path: Option<PathBuf> },
+    List,
+}
+
+/// Combine Hyp's built-in checkers with your custom ones
+fn all_registrations() -> Vec<CheckerRegistration> {
+    let mut regs = get_all_checkers();  // All E1xxx built-in checkers
+
+    // Add your custom checkers
+    regs.push(register_checker!(E4001TransactionLeak, E4001Config));
+
+    regs
+}
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    let categories = parse_categories(&cli.category);
+
+    let opts = CliOptions {
+        source: PathBuf::from("."),
+        config_path: find_config_file(),
+        severity: cli.severity,
+        categories,
+        all: cli.all,
+        include: cli.include.as_ref().map(|s| split_csv(s)),
+        exclude: cli.exclude.as_ref().map(|s| split_csv(s)),
+        format: if cli.format == "json" { CliOutputFormat::Json } else { CliOutputFormat::Text },
+        verbose: cli.verbose,
+    };
+
+    match &cli.command {
+        Some(Commands::Check { path }) => {
+            let mut opts = opts;
+            opts.source = path.clone().unwrap_or_else(|| PathBuf::from("."));
+            run_cli(opts, all_registrations)?;
+        }
+        Some(Commands::List) => {
+            print_checker_list_from_registrations(&opts, all_registrations())?;
+        }
+        None => {
+            run_cli(opts, all_registrations)?;
+        }
+    }
+
+    Ok(())
+}
+```
+
+### 4. Define your custom checkers
+
+Create `src/checkers/mod.rs`:
+
+```rust
+pub mod e4001_transaction_leak;
+pub use e4001_transaction_leak::{E4001TransactionLeak, E4001Config};
+```
+
+Create `src/checkers/e4001_transaction_leak.rs`:
+
+```rust
+use hyp_analyzer::{define_checker, violation::Violation};
 use syn::visit::Visit;
 
 define_checker! {
@@ -105,10 +199,8 @@ struct TransactionVisitor<'a> {
 
 impl<'a> Visit<'a> for TransactionVisitor<'a> {
     fn visit_expr_method_call(&mut self, node: &'a syn::ExprMethodCall) {
-        // Detect db.query(...) calls not inside transaction blocks
         let method_name = node.method.to_string();
         if method_name == "query" || method_name == "execute" {
-            // Simplified: flag any direct query call
             use syn::spanned::Spanned;
             let span = node.span().start();
             self.violations.push(Violation::new(
@@ -126,214 +218,74 @@ impl<'a> Visit<'a> for TransactionVisitor<'a> {
 }
 ```
 
-Export checkers in `src/checkers/mod.rs`:
-
-```rust
-pub mod e4001_transaction_leak;
-pub use e4001_transaction_leak::{E4001TransactionLeak, E4001Config};
-
-// Add more custom checkers here...
-```
-
-### 4. Create the CLI binary (`src/main.rs`)
-
-```rust
-use anyhow::Result;
-use clap::Parser;
-use hyp_analyzer::{
-    cli_helper::{print_checker_list_from_registrations, run_cli, CliOptions, CliOutputFormat},
-    registry::{get_all_checkers, CheckerRegistration},
-    register_checker,
-    checker::Checker,
-    CheckerCategory,
-};
-use std::collections::HashSet;
-use std::path::PathBuf;
-
-mod checkers;
-use checkers::{E4001TransactionLeak, E4001Config};
-
-#[derive(Parser)]
-#[command(name = "cargo-hyp-myproject")]
-#[command(about = "Custom Hyp analyzer for MyProject", long_about = None)]
-#[command(version)]
-struct Cli {
-    /// When invoked as `cargo hyp-myproject`, cargo passes "hyp-myproject" as first arg
-    #[arg(hide = true)]
-    _cargo_subcommand: Option<String>,
-
-    #[arg(short, long, default_value = ".")]
-    source: PathBuf,
-
-    #[arg(short, long, default_value = "hyp.yaml")]
-    config: PathBuf,
-
-    #[arg(long)]
-    all: bool,
-
-    #[arg(long)]
-    include: Option<String>,
-
-    #[arg(long)]
-    exclude: Option<String>,
-
-    #[arg(long)]
-    severity: Option<u8>,
-
-    #[arg(long)]
-    category: Option<String>,
-
-    #[arg(short = 'f', long, default_value = "text")]
-    format: String,
-
-    #[arg(short = 'l', long)]
-    list: bool,
-
-    #[arg(short = 'v', long, action = clap::ArgAction::Count)]
-    verbose: u8,
-}
-
-/// Combine Hyp's built-in checkers with your custom ones
-fn all_registrations() -> Vec<CheckerRegistration> {
-    let mut regs = get_all_checkers();  // All E1xxx built-in checkers
-
-    // Add your custom checkers (E2xxx, E3xxx, E4xxx, ...)
-    regs.push(register_checker!(E4001TransactionLeak, E4001Config));
-    // regs.push(register_checker!(E2001NoUserGenerics, E2001Config));
-    // regs.push(register_checker!(E3001DtoLocation, E3001Config));
-
-    regs
-}
-
-fn main() -> Result<()> {
-    let cli = Cli::parse();
-
-    let categories = cli.category.as_ref().and_then(|cat_str| {
-        let set: HashSet<CheckerCategory> = cat_str
-            .split(',')
-            .filter_map(|s| CheckerCategory::parse_category(s.trim()))
-            .collect();
-        if set.is_empty() { None } else { Some(set) }
-    });
-
-    let opts = CliOptions {
-        source: cli.source,
-        config_path: cli.config,
-        severity: cli.severity,
-        categories,
-        all: cli.all,
-        include: cli.include.map(|s| s.split(',').map(|p| p.trim().to_string()).collect()),
-        exclude: cli.exclude.map(|s| s.split(',').map(|p| p.trim().to_string()).collect()),
-        format: if cli.format == "json" { CliOutputFormat::Json } else { CliOutputFormat::Text },
-        verbose: cli.verbose,
-    };
-
-    if cli.list {
-        print_checker_list_from_registrations(&all_registrations());
-        return Ok(());
-    }
-
-    run_cli(opts, all_registrations)?;
-    Ok(())
-}
-```
-
-### 5. Build and install
+### 5. Build and use
 
 ```bash
 cargo build --release
 cargo install --path .
+
+# Now use it:
+cargo hyp-myproject check src/
+cargo hyp-myproject list
+cargo hyp-myproject check --include e4001  # Only your custom checker
 ```
 
-### 6. Use it!
+## Available CLI Helpers
 
-```bash
-# Run from your project directory
-cargo hyp-myproject --source src/ -v
+The `hyp_analyzer::cli_helper` module provides these reusable functions:
 
-# List all checkers (built-in + custom)
-cargo hyp-myproject --list
+| Function | Purpose |
+|----------|---------|
+| `run_cli()` | Main analysis runner with full workflow |
+| `print_checker_list_from_registrations()` | Print checker list table |
+| `print_guidelines_from_registrations()` | Print AI guidelines |
+| `print_default_config()` | Generate TOML config template |
+| `run_validation()` | Validate problem examples |
+| `print_validation_results()` | Print validation summary |
+| `find_config_file()` | Find Hyp.toml in directory tree |
+| `parse_categories()` | Parse category CLI argument |
+| `split_csv()` | Split comma-separated string |
+| `filter_registrations()` | Apply include/exclude filters |
 
-# Exclude certain built-in checkers you don't want
-cargo hyp-myproject --source src/ --exclude e1106
-
-# Run only your custom checkers
-cargo hyp-myproject --source src/ --include e4001
-```
-
-## Alternatively: Add Custom Hyp to Your Existing Project
-
-Instead of a separate repository, you can add a local `tools/hyp-myproject/` crate
-inside your main project:
-
-```
-my-project/
-├── Cargo.toml          # workspace
-├── src/
-│   └── lib.rs
-└── tools/
-    └── hyp-myproject/
-        ├── Cargo.toml
-        └── src/
-            ├── main.rs
-            └── checkers/
-                └── ...
-```
-
-Add to workspace `Cargo.toml`:
-
-```toml
-[workspace]
-members = [".", "tools/hyp-myproject"]
-```
-
-Then run:
-
-```bash
-cargo run -p cargo-hyp-myproject -- --source src/ -v
-```
-
-### Example Custom Checker Categories
+## Custom Checker Categories
 
 | Code Range | Category | Example Checks |
 |------------|----------|----------------|
-| **E2xxx** | Custom Rust Rules | Prohibit user-defined generics, no direct thread spawning, no `unsafe` |
-| **E3xxx** | Repo Layout Rules | DTOs only in `api/`, no business logic in `routes/`, models in `domain/` |
-| **E4xxx** | Business Logic | Transaction leak detection, API auth middleware required, no raw SQLx |
+| **E2xxx** | Custom Rust Rules | Prohibit user-defined generics, no direct thread spawning |
+| **E3xxx** | Repo Layout Rules | DTOs only in `api/`, no business logic in `routes/` |
+| **E4xxx** | Business Logic | Transaction leak, API auth middleware required |
 
-### Disabling Built-in Checkers
-
-If some Hyp built-in checkers don't fit your project, exclude them:
+## Disabling Built-in Checkers
 
 **Via CLI:**
 ```bash
-cargo hyp-myproject --exclude e1106,e1002
+cargo hyp-myproject check --exclude e1106,e1002
 ```
 
-**Via `hyp.yaml`:**
-```yaml
-checkers:
-  e1002_direct_unwrap_expect:
-    enabled: false
-  e1106_long_function:
-    enabled: false
+**Via `Hyp.toml`:**
+```toml
+[checkers]
+e1002_direct_unwrap_expect.enabled = false
+e1106_long_function.enabled = false
 ```
 
-**Or don't include them at all** in `all_registrations()`:
+**Or selectively include checkers in code:**
 ```rust
 fn all_registrations() -> Vec<CheckerRegistration> {
-    // Only include specific groups
     use hyp_analyzer::registry::{CheckerGroup, checkers_for_groups};
-    let mut regs = checkers_for_groups(&[CheckerGroup::E10]); // Only unsafe checkers
 
-    // Add custom
+    // Only include E10 (unsafe) checkers from built-in
+    let mut regs = checkers_for_groups(&[CheckerGroup::E10]);
+
+    // Add your custom checkers
     regs.push(register_checker!(E4001TransactionLeak, E4001Config));
+
     regs
 }
 ```
 
 ## Resources
 
-- **Built-in checker examples**: See `hyp/crates/hyp-analyzer/src/checkers/e10/` and `e14/`
-- **CLI reference implementation**: See `hyp/crates/hyp-analyzer-cli/src/main.rs`
-- **Checker implementation guide**: See [crates/hyp-analyzer/README.md](crates/hyp-analyzer/README.md)
+- **Built-in checkers**: `hyp/crates/hyp-analyzer/src/checkers/`
+- **Reference CLI**: `hyp/crates/hyp-analyzer-cli/src/main.rs`
+- **CLI helpers**: `hyp/crates/hyp-analyzer/src/cli_helper.rs`

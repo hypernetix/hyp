@@ -45,6 +45,11 @@ pub mod violation;
 
 pub use analyzer::{Analyzer, AnalyzerFilters, CheckerGuideline, CheckerInfo};
 pub use checker::{Checker, CheckerDescriptor, ItemType};
+pub use cli_helper::{
+    filter_registrations_with_config, find_config_file, load_config, parse_categories,
+    print_default_config, print_validation_results, run_validation, split_csv, CliOptions,
+    CliOutputFormat, FunctionValidation, ValidationSummary,
+};
 pub use config::{AnalyzerConfig, CheckerCategory, SeverityLevel};
 pub use registry::{get_all_checkers, CheckerFactory, CheckerRegistration};
 pub use violation::{CheckerSeverity, Severity, Violation};

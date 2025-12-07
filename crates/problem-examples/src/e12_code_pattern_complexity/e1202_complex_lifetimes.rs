@@ -20,7 +20,7 @@
 // The function returns a reference that lives for lifetime 'd.
 //
 // PROBLEM E1202: Overly complex lifetime relationships
-pub fn e1202_complex_lifetimes<'a, 'b, 'c, 'd>(x: &'a str, y: &'b str, z: &'c str) -> &'d str
+pub fn e1202_bad_complex_lifetimes<'a, 'b, 'c, 'd>(x: &'a str, y: &'b str, z: &'c str) -> &'d str
 where
     'a: 'd,
     'b: 'd,
@@ -38,6 +38,6 @@ pub fn e1202_entry() -> Result<(), Box<dyn std::error::Error>> {
     let x = "hello";
     let y = "world";
     let z = "!";
-    let _ = e1202_complex_lifetimes(x, y, z);
+    let _ = e1202_bad_complex_lifetimes(x, y, z);
     Ok(())
 }

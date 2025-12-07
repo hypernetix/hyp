@@ -64,7 +64,7 @@ pub struct TypedBuilder<T, HasName, HasAge, HasEmail> {
 pub struct Yes;
 pub struct No;
 
-pub fn e1208_phantom_types() {
+pub fn e1208_bad_phantom_types() {
     let db = Database::<Unlocked>::new("localhost".to_string());
     let locked_db = db.lock();
 
@@ -74,6 +74,6 @@ pub fn e1208_phantom_types() {
 }
 
 pub fn e1208_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1208_phantom_types();
+    e1208_bad_phantom_types();
     Ok(())
 }

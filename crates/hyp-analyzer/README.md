@@ -23,7 +23,7 @@ This roadmap categorizes all problems by:
 - **Implementation Difficulty**: Estimated complexity of implementing the checker (1=simple, 5=very complex)
 - **Priority Phase**: When to implement (Phase 1=simple & clear, Phase 2=moderate, Phase 3=complex & unclear)
 
-### Phase 1: Simple & Clear Checks (35 checkers)
+### Phase 1: Simple & Clear Checks (42 checkers)
 
 These are straightforward pattern matches or simple metrics. Implement first.
 
@@ -66,6 +66,13 @@ These are straightforward pattern matches or simple metrics. Implement first.
  [x] | E1809 | Fallible new() | MED | 2 | 2 | E18 API Design |
  [x] | E1810 | String instead of &str | LOW | 2 | 2 | E18 API Design |
  [x] | E1104 | Overly large struct (too many fields) | MED | 2 | 1 | E11 Surface Complexity |
+ [x] | E1017 | todo!/unimplemented! macros in code | HIGH | 2 | 1 | E10 Unsafe Code |
+ [x] | E1112 | Hardcoded magic numbers | LOW | 2 | 2 | E11 Surface Complexity |
+ [x] | E1410 | Float equality comparison with == | MED | 2 | 2 | E14 Type Safety |
+ [x] | E1511 | Unbounded task/thread spawning in loop | HIGH | 2 | 2 | E15 Concurrency |
+ [x] | E1611 | Method consumes self unnecessarily | MED | 2 | 2 | E16 Memory Safety |
+ [x] | E1712 | Expensive operations inside loops | MED | 2 | 2 | E17 Performance |
+ [x] | E1812 | Public enum without #[non_exhaustive] | LOW | 2 | 2 | E18 API Design |
 
 
 ### Phase 2: Moderate Complexity (40 checkers)
@@ -227,7 +234,7 @@ Hyp complements these tools by focusing on **syntactic patterns** that are:
 1. **Parser**: Uses `syn` crate to parse Rust source files into AST
 2. **Checker Registry**: Manages all available checkers
 3. **Checker Trait**: Standard interface all checkers implement
-4. **Configuration**: YAML configuration deserialized into per-checker config structs
+4. **Configuration**: TOML configuration deserialized into per-checker config structs
 5. **Reporter**: Formats and outputs violations
 
 ### Checker Structure
@@ -335,7 +342,7 @@ impl Default for E1401Config {
 }
 ```
 
-At runtime, `AnalyzerConfig` deserializes YAML into these config structs via
+At runtime, `AnalyzerConfig` deserializes TOML into these config structs via
 `get_checker_config::<E1106Config>("e1106_long_function")`, using the
 `CONFIG_ENTRY_NAME` defined by `define_checker!`.
 
@@ -343,39 +350,72 @@ At runtime, `AnalyzerConfig` deserializes YAML into these config structs via
 
 ### CLI Tool
 
+The `hyp` CLI provides several commands for analyzing code and managing configuration:
+
 ```bash
-# Analyze current directory with default config
-hyp-analyzer-cli
+# Display help (default when no command given)
+hyp
+hyp help
 
-# Specify source and config
-hyp-analyzer-cli --source /path/to/code --config hyp.yaml
+# Scan source code
+hyp check                     # Check current directory
+hyp check /path/to/code       # Check specific path
+hyp check --all               # Enable all checkers
+hyp check --severity 3        # Only high-severity issues
 
-# Enable all checkers
-hyp-analyzer-cli --all
+# List available checkers
+hyp list                      # All checkers
+hyp list --severity 3         # High-severity only
+hyp list --category operations # Specific category
 
-# Enable only specific checkers
-hyp-analyzer-cli --include e1001,e1106
+# View configuration
+hyp print-config              # Show all settings
+hyp print-config --include e10 # Show E10xx only
 
-# Disable specific checkers
-hyp-analyzer-cli --exclude e1201,e1208
+# Generate AI guidelines
+hyp guideline                 # All enabled checkers
+hyp guideline --include e10   # Specific checkers
+
+# Validate examples
+hyp verify-examples           # Validate problem examples
 ```
 
-### Configuration File (hyp.yaml)
+### Global Options
 
-```yaml
-checkers:
-  e1001_direct_panic:
-    enabled: true
+```bash
+--all                         # Enable all checkers (overrides config)
+--include e10,e1401           # Include only specified (comma-separated)
+--exclude e1002,e11           # Exclude specified (supports prefixes)
+--severity 3                  # Minimum severity (1=Low, 2=Med, 3=High)
+--category operations         # Filter by category
+-f json                       # Output format (text or json)
+-v, -vv                       # Verbose output
+```
 
-  e1106_long_function:
-    enabled: true
-    properties:
-      max_lines: 200
+### Configuration File (Hyp.toml)
 
-  e1101_high_cyclomatic_complexity:
-    enabled: false
-    properties:
-      max_complexity: 15
+Hyp searches for `Hyp.toml` from the current directory upward through parent directories.
+
+```toml
+[checkers]
+# Enable/disable individual checkers
+e1001_direct_panic.enabled = true
+e1002_direct_unwrap_expect.enabled = false
+
+# Configure checker-specific settings
+e1106_long_function.enabled = true
+e1106_long_function.max_lines = 200
+
+e1101_high_cyclomatic_complexity.enabled = true
+e1101_high_cyclomatic_complexity.max_complexity = 15
+
+# Adjust severity and categories
+e1001_direct_panic.severity = 3
+e1001_direct_panic.categories = ["operations"]
+
+# Disable entire checker categories
+e11.enabled = false  # Disable all E11xx (Code Surface Complexity)
+e14.enabled = false  # Disable all E14xx (Type Safety)
 ```
 
 ## Development

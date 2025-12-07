@@ -7,7 +7,7 @@ use crate::{
         E1403Config, E1403ModuloByZero, E1404Config, E1404NarrowingConversion,
         E1405Config, E1405IntegerDivisionRounding, E1406Config, E1406SignedUnsignedMismatch,
         E1407Config, E1407LossyFloatConversion, E1408Config, E1408UncheckedIndexing,
-        E1409Config, E1409PartialInitialization,
+        E1409Config, E1409PartialInitialization, E1410Config, E1410FloatEquality,
     },
     register_checker,
     registry::CheckerRegistration,
@@ -25,5 +25,6 @@ pub fn e14_registrations() -> Vec<CheckerRegistration> {
         register_checker!(E1407LossyFloatConversion, E1407Config),
         register_checker!(E1408UncheckedIndexing, E1408Config),
         register_checker!(E1409PartialInitialization, E1409Config),
+        register_checker!(E1410FloatEquality, E1410Config),
     ]
 }

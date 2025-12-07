@@ -29,7 +29,7 @@ pub struct Account {
 // we get a deadlock because they acquire locks in different orders.
 //
 // PROBLEM E1217: Classical ABBA deadlock pattern
-pub fn e1217_abba_deadlock(skip: bool, from: Arc<Account>, to: Arc<Account>, amount: f64) {
+pub fn e1217_bad_abba_deadlock(skip: bool, from: Arc<Account>, to: Arc<Account>, amount: f64) {
     // Prevent self-transfer which would deadlock immediately on the first lock
     if Arc::ptr_eq(&from, &to) {
         println!("Skipping self-transfer to avoid self-deadlock");
@@ -99,6 +99,6 @@ pub fn e1217_entry() -> Result<(), Box<dyn std::error::Error>> {
         id: 2,
         balance: Mutex::new(100.0),
     });
-    e1217_abba_deadlock(true, from, to, 10.0);
+    e1217_bad_abba_deadlock(true, from, to, 10.0);
     Ok(())
 }

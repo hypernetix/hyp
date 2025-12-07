@@ -33,7 +33,7 @@ pub type ComplexCallback<'a> = Box<
 // which concrete types satisfy all the requirements.
 //
 // PROBLEM E1211: Trait object with lifetime and multiple trait bounds
-pub fn e1211_trait_object_complexity<'a>(
+pub fn e1211_bad_trait_object_complexity<'a>(
     handlers: Vec<Box<dyn Fn(i32) -> i32 + Send + Sync + 'a>>,
 ) -> Box<dyn Iterator<Item = i32> + 'a> {
     let combined: Box<dyn Iterator<Item = i32> + 'a> = Box::new(
@@ -70,8 +70,23 @@ pub trait Handler {
     fn handle(&self, input: &str) -> Self::Output;
 }
 
-pub fn e1211_complex_trait_object() -> Box<dyn Handler<Output = String>> {
-    unimplemented!("Complex trait object with associated types")
+/// A concrete handler that implements the Handler trait
+struct StringHandler;
+
+impl Handler for StringHandler {
+    type Output = String;
+    fn handle(&self, input: &str) -> Self::Output {
+        format!("Handled: {}", input)
+    }
+}
+
+pub fn e1211_bad_complex_trait_object(flag: i32) -> Box<dyn Handler<Output = String>> {
+    if flag > 0 {
+        // PROBLEM E1211: Returning trait objects with associated type constraints is complex
+        unimplemented!("Complex trait object with associated types")
+    } else {
+        Box::new(StringHandler)
+    }
 }
 
 // This function combines trait objects (dyn Fn) with generic type parameters (T).
@@ -81,7 +96,7 @@ pub fn e1211_complex_trait_object() -> Box<dyn Handler<Output = String>> {
 // Mixing generics with trait objects creates complexity - you have TWO levels of abstraction.
 //
 // PROBLEM E1211: Combining trait objects with generics
-pub fn e1211_mixed_complexity<T>(
+pub fn e1211_bad_mixed_complexity<T>(
     _processor: Box<dyn Fn(T) -> T + Send>,
     _validator: Box<dyn Fn(&T) -> bool + Sync>,
 ) where
@@ -92,6 +107,10 @@ pub fn e1211_mixed_complexity<T>(
 
 pub fn e1211_entry() -> Result<(), Box<dyn std::error::Error>> {
     let handlers: Vec<Box<dyn Fn(i32) -> i32 + Send + Sync>> = vec![];
-    let _ = e1211_trait_object_complexity(handlers);
+    let _ = e1211_bad_trait_object_complexity(handlers);
+    // Call with flag <= 0 to avoid unimplemented branch
+    let handler = e1211_bad_complex_trait_object(0);
+    let _ = handler.handle("test");
+    // Note: e1211_bad_mixed_complexity uses unimplemented!() so we don't call it
     Ok(())
 }

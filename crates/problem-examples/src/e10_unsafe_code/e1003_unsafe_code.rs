@@ -14,7 +14,7 @@
 /// Mitigation: Try to avoid unsafe code in release builds or move it to isolated modules
 /// to make it easier to audit.
 
-pub fn e1003_unsafe_code() {
+pub fn e1003_bad_unsafe_code() {
     let x = 42;
     let ptr = &x as *const i32;
 
@@ -26,6 +26,61 @@ pub fn e1003_unsafe_code() {
 }
 
 pub fn e1003_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1003_unsafe_code();
+    e1003_bad_unsafe_code();
     Ok(())
+}
+
+// ============================================================================
+// GOOD EXAMPLES - Proper alternatives
+// ============================================================================
+
+/// GOOD: Use safe Rust abstractions instead of raw pointers
+pub fn e1003_good_use_references() {
+    let x = 42;
+    let reference = &x; // Safe reference, no unsafe needed
+    let _value = *reference;
+}
+
+/// GOOD: If unsafe is necessary, document with SAFETY comment
+pub fn e1003_good_documented_unsafe() {
+    let x = 42;
+    let ptr = &x as *const i32;
+
+    // SAFETY: ptr is derived from a valid reference to x, which is
+    // still in scope. The pointer is properly aligned for i32 and
+    // we only read from it (no aliasing concerns).
+    unsafe {
+        let _value = *ptr;
+    }
+}
+
+/// GOOD: Encapsulate unsafe in a safe abstraction
+pub fn e1003_good_safe_wrapper(data: &[i32]) -> Option<i32> {
+    // Use safe checked access instead of unsafe pointer arithmetic
+    data.first().copied()
+}
+
+// ============================================================================
+// GOOD EXAMPLES unit tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn e1003_good_safe_wrapper_returns_first() {
+        let data = [1, 2, 3];
+        assert_eq!(e1003_good_safe_wrapper(&data), Some(1));
+    }
+
+    #[test]
+    fn e1003_good_documented_unsafe_reads_value() {
+        e1003_good_documented_unsafe();
+    }
+
+    #[test]
+    fn e1003_good_use_references_reads_reference() {
+        e1003_good_use_references();
+    }
 }

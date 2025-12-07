@@ -10,3 +10,4 @@ pub mod e1507_unsynchronized_shared_state;
 pub mod e1508_sleep_instead_of_sync;
 pub mod e1509_channel_lifetime;
 pub mod e1510_mutex_instead_of_rwlock;
+pub mod e1511_unbounded_spawning;

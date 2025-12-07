@@ -10,3 +10,4 @@ pub mod e1107_deep_nesting;
 pub mod e1108_nested_match;
 pub mod e1109_excessive_chaining;
 pub mod e1110_nested_callbacks;
+pub mod e1112_magic_numbers;

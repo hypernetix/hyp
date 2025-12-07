@@ -110,7 +110,7 @@ patterns in:
      - `name`
      - `suggestions`
      - `target_items` (e.g. `[Function]`)
-     - `config_entry_name` (YAML key, e.g. `"e1004_unsafe_without_comment"`)
+     - `config_entry_name` (TOML key, e.g. `"e1004_unsafe_without_comment"`)
      - `config` struct fields and defaults
      - `check_item` body that walks the `syn` AST and returns `Vec<Violation>`
 

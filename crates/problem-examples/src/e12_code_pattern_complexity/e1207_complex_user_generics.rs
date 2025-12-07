@@ -60,7 +60,7 @@ pub trait Processor {
 // requires tracking types across 3 trait levels!
 //
 // PROBLEM E1207: Complex user-defined generic with circular-looking constraints
-pub fn e1207_complex_user_generics<P>() -> P::Final
+pub fn e1207_bad_complex_user_generics<P>() -> P::Final
 where
     P: Processor,
     P::Pipe: Pipeline,

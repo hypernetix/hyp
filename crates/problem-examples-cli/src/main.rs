@@ -21,6 +21,7 @@ use problem_examples::e10_unsafe_code::e1013_union_unsafe_access::e1013_entry;
 use problem_examples::e10_unsafe_code::e1014_pointer_arithmetic::e1014_entry;
 use problem_examples::e10_unsafe_code::e1015_unwrap_expect_wo_context::e1015_entry;
 use problem_examples::e10_unsafe_code::e1016_mutex_unwrap::e1016_entry;
+use problem_examples::e10_unsafe_code::e1017_todo_unimplemented::e1017_entry;
 use problem_examples::e11_code_surface_complexity::e1101_high_cyclomatic_complexity::e1101_entry;
 use problem_examples::e11_code_surface_complexity::e1102_deep_nested_logic_in_loops::e1102_entry;
 use problem_examples::e11_code_surface_complexity::e1103_too_many_params::e1103_entry;
@@ -31,6 +32,7 @@ use problem_examples::e11_code_surface_complexity::e1107_deep_nesting::e1107_ent
 use problem_examples::e11_code_surface_complexity::e1108_nested_match::e1108_entry;
 use problem_examples::e11_code_surface_complexity::e1109_excessive_chaining::e1109_entry;
 use problem_examples::e11_code_surface_complexity::e1110_nested_callbacks::e1110_entry;
+use problem_examples::e11_code_surface_complexity::e1112_magic_numbers::e1112_entry;
 use problem_examples::e12_code_pattern_complexity::e1201_complex_generics::e1201_entry;
 use problem_examples::e12_code_pattern_complexity::e1202_complex_lifetimes::e1202_entry;
 use problem_examples::e12_code_pattern_complexity::e1203_complicated_borrowing::e1203_entry;
@@ -78,6 +80,7 @@ use problem_examples::e15_concurrency::e1507_unsynchronized_shared_state::e1507_
 use problem_examples::e15_concurrency::e1508_sleep_instead_of_sync::e1508_entry;
 use problem_examples::e15_concurrency::e1509_channel_lifetime::e1509_entry;
 use problem_examples::e15_concurrency::e1510_mutex_instead_of_rwlock::e1510_entry;
+use problem_examples::e15_concurrency::e1511_unbounded_spawning::e1511_entry;
 use problem_examples::e16_memory_safety::e1601_aliasing_violation::e1601_entry;
 use problem_examples::e16_memory_safety::e1602_use_after_free::e1602_entry;
 use problem_examples::e16_memory_safety::e1603_dangling_reference::e1603_entry;
@@ -88,6 +91,7 @@ use problem_examples::e16_memory_safety::e1607_forget_drop::e1607_entry;
 use problem_examples::e16_memory_safety::e1608_double_free::e1608_entry;
 use problem_examples::e16_memory_safety::e1609_invalid_slice::e1609_entry;
 use problem_examples::e16_memory_safety::e1610_unaligned_deref::e1610_entry;
+use problem_examples::e16_memory_safety::e1611_consuming_self::e1611_entry;
 use problem_examples::e17_performance::e1701_oversized_struct::e1701_entry;
 use problem_examples::e17_performance::e1702_unnecessary_allocations::e1702_entry;
 use problem_examples::e17_performance::e1703_string_concat_loop::e1703_entry;
@@ -98,6 +102,7 @@ use problem_examples::e17_performance::e1707_unbounded_recursion::e1707_entry;
 use problem_examples::e17_performance::e1708_inefficient_data_structure::e1708_entry;
 use problem_examples::e17_performance::e1709_unnecessary_boxing::e1709_entry;
 use problem_examples::e17_performance::e1710_large_stack_allocation::e1710_entry;
+use problem_examples::e17_performance::e1712_expensive_ops_in_loop::e1712_entry;
 use problem_examples::e18_api_design::e1801_glob_imports::e1801_entry;
 use problem_examples::e18_api_design::e1802_public_fields::e1802_entry;
 use problem_examples::e18_api_design::e1803_bad_naming::e1803_entry;
@@ -108,6 +113,7 @@ use problem_examples::e18_api_design::e1807_non_idiomatic_builder::e1807_entry;
 use problem_examples::e18_api_design::e1808_mutable_getter::e1808_entry;
 use problem_examples::e18_api_design::e1809_fallible_new::e1809_entry;
 use problem_examples::e18_api_design::e1810_string_instead_of_str::e1810_entry;
+use problem_examples::e18_api_design::e1812_non_exhaustive_enum::e1812_entry;
 
 #[derive(Parser)]
 #[command(name = "problem-examples")]
@@ -201,6 +207,7 @@ fn show_category(category: &str) {
             println!("E1014 - Raw pointer arithmetic (offset/add/sub) without bounds");
             println!("E1015 - Unwrap/expect with poor or missing context message");
             println!("E1016 - Mutex lock().unwrap() - causes panic cascades on poisoning");
+            println!("E1017 - todo!/unimplemented! macros in code - panics at runtime");
         }
         "e11" => {
             println!("E11* - Code Surface Complexity Problems\n");
@@ -213,6 +220,7 @@ fn show_category(category: &str) {
             println!("E1108 - Deeply nested match expressions");
             println!("E1109 - Excessive method chaining");
             println!("E1110 - Nested callbacks/closures");
+            println!("E1112 - Hardcoded magic numbers");
         }
         "e12" => {
             println!("E12* - Code Pattern Complexity Problems\n");
@@ -258,7 +266,7 @@ fn show_category(category: &str) {
             println!("E1407 - Lossy float to int conversion");
             println!("E1408 - Unchecked array indexing");
             println!("E1409 - Partial initialization");
-            println!("E1410 - Type confusion with transmute");
+            println!("E1410 - Float equality comparison with == / Type confusion with transmute");
         }
         "e15" => {
             println!("E15* - Concurrency Problems\n");
@@ -272,6 +280,7 @@ fn show_category(category: &str) {
             println!("E1508 - Using thread::sleep instead of proper synchronization");
             println!("E1509 - Channel sender/receiver lifetime issues");
             println!("E1510 - Arc<Mutex<T>> instead of RwLock");
+            println!("E1511 - Unbounded task/thread spawning in loops");
         }
         "e16" => {
             println!("E16* - Memory Safety Problems\n");
@@ -285,6 +294,7 @@ fn show_category(category: &str) {
             println!("E1608 - Double free");
             println!("E1609 - Slice from raw parts with invalid length");
             println!("E1610 - Unaligned pointer dereference");
+            println!("E1611 - Method consumes self unnecessarily");
         }
         "e17" => {
             println!("E17* - Performance Problems\n");
@@ -298,6 +308,7 @@ fn show_category(category: &str) {
             println!("E1708 - Inefficient data structure choice");
             println!("E1709 - Unnecessary boxing");
             println!("E1710 - Large stack allocation");
+            println!("E1712 - Expensive operations inside loops");
         }
         "e18" => {
             println!("E18* - API Design Problems\n");
@@ -311,6 +322,7 @@ fn show_category(category: &str) {
             println!("E1808 - Mutable getter");
             println!("E1809 - Using new() for fallible construction");
             println!("E1810 - Accepting String instead of &str");
+            println!("E1812 - Public enum without #[non_exhaustive]");
         }
         _ => {
             eprintln!("Unknown category: {}", category);
@@ -418,6 +430,7 @@ macro_rules! define_problems {
             ("E1014", "Pointer arithmetic", e1014_entry),
             ("E1015", "Unwrap/expect without context", e1015_entry),
             ("E1016", "Mutex unwrap poisoning", e1016_entry),
+            ("E1017", "todo!/unimplemented! in code", e1017_entry),
 
             // E11: Code Surface Complexity
             ("E1101", "High cyclomatic complexity", e1101_entry),
@@ -430,6 +443,7 @@ macro_rules! define_problems {
             ("E1108", "Nested match", e1108_entry),
             ("E1109", "Excessive chaining", e1109_entry),
             ("E1110", "Nested callbacks", e1110_entry),
+            ("E1112", "Hardcoded magic numbers", e1112_entry),
 
             // E12: Code Pattern Complexity
             ("E1201", "Complex generics", e1201_entry),
@@ -485,6 +499,7 @@ macro_rules! define_problems {
             ("E1508", "Sleep instead of sync", e1508_entry),
             ("E1509", "Channel lifetime", e1509_entry),
             ("E1510", "Mutex instead of RwLock", e1510_entry),
+            ("E1511", "Unbounded spawning", e1511_entry),
 
             // E16: Memory Safety
             ("E1601", "Aliasing violations", e1601_entry),
@@ -497,6 +512,7 @@ macro_rules! define_problems {
             ("E1608", "Double free", e1608_entry),
             ("E1609", "Invalid slice", e1609_entry),
             ("E1610", "Unaligned deref", e1610_entry),
+            ("E1611", "Consuming self unnecessarily", e1611_entry),
 
             // E17: Performance
             ("E1701", "Oversized struct", e1701_entry),
@@ -509,6 +525,7 @@ macro_rules! define_problems {
             ("E1708", "Inefficient data structure", e1708_entry),
             ("E1709", "Unnecessary boxing", e1709_entry),
             ("E1710", "Large stack allocation", e1710_entry),
+            ("E1712", "Expensive ops in loop", e1712_entry),
 
             // E18: API Design
             ("E1801", "Glob imports", e1801_entry),
@@ -521,6 +538,7 @@ macro_rules! define_problems {
             ("E1808", "Mutable getter", e1808_entry),
             ("E1809", "Fallible new", e1809_entry),
             ("E1810", "String instead of &str", e1810_entry),
+            ("E1812", "Non-exhaustive enum", e1812_entry),
         }
     };
 }

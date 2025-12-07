@@ -7,7 +7,7 @@ use crate::{
         E1003UnsafeCode, E1004Config, E1004UnsafeWithoutComment, E1007Config,
         E1007NullPointerDeref, E1008Config, E1008UnsafeTraitImpl, E1010Config, E1010MutableStatic,
         E1013Config, E1013UnionFieldAccess, E1014Config, E1014RawPointerArithmetic, E1015Config,
-        E1015UnwrapExpect, E1016Config, E1016MutexUnwrap,
+        E1015UnwrapExpect, E1016Config, E1016MutexUnwrap, E1017Config, E1017TodoUnimplemented,
     },
     register_checker,
     registry::CheckerRegistration,
@@ -27,5 +27,6 @@ pub fn e10_registrations() -> Vec<CheckerRegistration> {
         register_checker!(E1014RawPointerArithmetic, E1014Config),
         register_checker!(E1015UnwrapExpect, E1015Config),
         register_checker!(E1016MutexUnwrap, E1016Config),
+        register_checker!(E1017TodoUnimplemented, E1017Config),
     ]
 }

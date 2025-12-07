@@ -24,7 +24,7 @@ define_checker! {
         /// Categories this checker belongs to
         categories: Vec<crate::config::CheckerCategory> = vec![crate::config::CheckerCategory::Complexity],
         /// Maximum allowed cyclomatic complexity
-        max_complexity: usize = 10,
+        max_complexity: usize = 25,
     },
     check_item(self, item, file_path) {
         let mut violations = Vec::new();

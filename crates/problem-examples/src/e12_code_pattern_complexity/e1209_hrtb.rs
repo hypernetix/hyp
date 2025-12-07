@@ -19,7 +19,7 @@
 // and f must handle both correctly. This is more flexible than a regular lifetime bound.
 //
 // PROBLEM E1209: Higher-ranked trait bound - works for ANY lifetime
-pub fn e1209_hrtb_example<F>(f: F)
+pub fn e1209_bad_hrtb_example<F>(f: F)
 where
     F: for<'a> Fn(&'a str) -> &'a str,
 {
@@ -29,11 +29,6 @@ where
     // F must work for both lifetimes
     let _r1 = f(s1);
     let _r2 = f(s2);
-}
-
-pub fn e1209_entry() -> Result<(), Box<dyn std::error::Error>> {
-    e1209_hrtb_example(|s| s);
-    Ok(())
 }
 
 // This trait has a lifetime parameter 'a in its definition.
@@ -49,7 +44,7 @@ pub trait Processor<'a> {
 // The `for<'a, 'b>` means the closure must work for ANY combination of lifetimes.
 // It takes two string references (potentially with different lifetimes)
 // and returns a reference with the same lifetime as the first one.
-pub fn e1209_complex_hrtb<T>(processor: T)
+pub fn e1209_bad_complex_hrtb<T>(processor: T)
 where
     T: for<'a, 'b> Fn(&'a str, &'b str) -> &'a str,
 {
@@ -73,10 +68,15 @@ pub trait Mapper {
 // So we have: for<'a> inside for<'b> inside for<'c> - three levels of "for all lifetimes"!
 //
 // PROBLEM E1209: Nested HRTB
-pub fn e1209_nested_hrtb<F, G>(f: F, g: G)
+pub fn e1209_bad_nested_hrtb<F, G>(f: F, g: G)
 where
     F: for<'a> Fn(&'a str) -> &'a str,
     G: for<'b> Fn(F) -> Box<dyn for<'c> Fn(&'c str) -> &'c str>,
 {
     unimplemented!("Nested higher-ranked trait bounds")
+}
+
+pub fn e1209_entry() -> Result<(), Box<dyn std::error::Error>> {
+    e1209_bad_hrtb_example(|s| s);
+    Ok(())
 }
